@@ -53,7 +53,9 @@ create table provider_calls (
   step text not null,
   attempt int not null,
   request_id text,
-  status text not null check (status in ('intent','submitted','done','failed','rejected','unknown')),
+  status text not null check (status in ('intent','submitted','done','failed','rejected','lost','expired','unknown','abandoned')),
+  submitted_at timestamptz,
+  error text,
   created_at timestamptz not null default clock_timestamp(),
   updated_at timestamptz not null default clock_timestamp()
 );
@@ -111,11 +113,18 @@ create table sim_provider.requests (
   error text,
   created_at timestamptz not null default clock_timestamp()
 );
+-- Submissions whose connection dropped before the provider received them.
+create table sim_provider.dropped (
+  client_key text not null,
+  step text not null,
+  at timestamptz not null default clock_timestamp()
+);
 """
 
 
-def connect(dsn):
-    return psycopg.connect(dsn, row_factory=dict_row, autocommit=True)
+def connect(dsn, app=None):
+    kw = {"application_name": app} if app else {}
+    return psycopg.connect(dsn, row_factory=dict_row, autocommit=True, **kw)
 
 
 def reset(dsn):

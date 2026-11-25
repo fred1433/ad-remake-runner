@@ -21,7 +21,7 @@ def dsn(pg):
     with db.connect(pg) as c:
         c.execute("insert into accounts (id, name) values (%s, 'Test studio')", (ACCOUNT,))
         ev = {"id": "evt_seed", "type": "checkout.session.completed",
-              "data": {"object": {"id": "cs_seed", "payment_intent": "pi_seed",
+              "data": {"object": {"id": "cs_seed", "payment_intent": "pi_seed", "payment_status": "paid",
                                   "metadata": {"account_id": ACCOUNT, "credits": "500"}}}}
         credits.handle_stripe_event(c, ev)
     return pg

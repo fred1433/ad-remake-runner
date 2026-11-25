@@ -15,19 +15,20 @@ import time
 from pathlib import Path
 
 from . import credits, db
-from .pipeline import COST, STEPS, FilmPipeline, ROOT
+from .pipeline import COST, STEP_LABELS, STEPS, FilmPipeline, ROOT
 from .provider import SimProvider
 from .worker import Worker, create_job, log
 
 LEASE_S = 6.0
+PROVIDER_DEADLINE_S = 300.0  # a clip with no answer this long after submission is cancelled and retried
 ACCOUNT = "acct_demo_studio"
 WEBHOOK_SECRET = "whsec_local_test_only"
 
 # incident injected per opening in the recorded run
 INCIDENTS = {
-    "A": {"provider": {"clip:04": ["fail"]}, "story": "The clip provider fails plan 4; only plan 4 is redone."},
-    "B": {"crash_at": "clip:02", "story": "The worker process is killed (SIGKILL) after plan 2; another worker takes over when the lease runs out."},
-    "C": {"provider": {"clip:05": ["slow"]}, "story": "The clip provider answers plan 5 late; the same request is polled, nothing is resubmitted."},
+    "A": {"provider": {"clip:04": ["fail"]}, "story": "The clip provider fails the clip of beat 4; only that clip is redone."},
+    "B": {"crash_at": "clip:02", "story": "The worker process is killed (SIGKILL) after the clip of beat 2; another worker takes over when the lease runs out."},
+    "C": {"provider": {"clip:05": ["slow"]}, "story": "The clip provider answers the clip of beat 5 late; the same request is polled, nothing is resubmitted."},
 }
 
 
@@ -40,8 +41,9 @@ def buy_credits(dsn, amount=500):
     the first one delivered twice at the same moment. Built and signed locally."""
     meta = {"account_id": ACCOUNT, "credits": str(amount)}
     evs = [_event("evt_local_checkout_1", "checkout.session.completed",
-                  {"id": "cs_local_1", "payment_intent": "pi_local_1", "metadata": meta})] * 2
-    evs.append(_event("evt_local_pi_1", "payment_intent.succeeded", {"id": "pi_local_1", "metadata": meta}))
+                  {"id": "cs_local_1", "payment_intent": "pi_local_1", "payment_status": "paid", "metadata": meta})] * 2
+    evs.append(_event("evt_local_pi_1", "payment_intent.succeeded",
+                      {"id": "pi_local_1", "status": "succeeded", "metadata": meta}))
     results = [None] * len(evs)
 
     def deliver(i, ev):
@@ -61,7 +63,8 @@ def buy_credits(dsn, amount=500):
 
 
 def worker_for(dsn, name, pipe, faults=None, **kw):
-    return Worker(dsn, name, pipe, SimProvider(dsn, pipe.render, faults or {}), lease_s=LEASE_S, **kw)
+    return Worker(dsn, name, pipe, SimProvider(dsn, pipe.render, faults or {}), lease_s=LEASE_S,
+                  provider_deadline_s=PROVIDER_DEADLINE_S, status_timeout_s=60.0, **kw)
 
 
 def run_job(dsn, job_id, hook, pipe, clean):
@@ -91,6 +94,7 @@ def export(dsn, jobs, stripe, clean):
         out = {"recorded_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                "postgres": c.execute("show server_version").fetchone()["server_version"],
                "lease_s": LEASE_S, "retry": {"base_s": 1.0, "cap_s": 8.0, "max_attempts": 4},
+               "provider_deadline_s": PROVIDER_DEADLINE_S, "step_labels": STEP_LABELS,
                "credits_per_film": COST, "clean": clean, "stripe": stripe, "jobs": []}
         for hook, jid in jobs.items():
             j = c.execute("select * from jobs where id=%s", (jid,)).fetchone()
@@ -139,7 +143,10 @@ def cmd_film(args):
             status = run_job(dsn, jid, h, pipe, args.clean)
             print(f"job {jid} hook {h}: {status} in {time.monotonic() - t:.1f} s")
         rec = export(dsn, jobs, stripe, args.clean)
-    path = ROOT / "runs" / ("clean_run.json" if args.clean else "recorded_run.json")
+    stem = "clean_run" if args.clean else "recorded_run"
+    if hooks != list(pipe.script["hooks"]):  # a partial run never replaces the full trace
+        stem += "_" + "".join(hooks)
+    path = ROOT / "runs" / f"{stem}.json"
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(rec, indent=1, default=str))
     for j in rec["jobs"]:

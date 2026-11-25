@@ -11,102 +11,81 @@
   {
    "id": "opening",
    "t": 20.5,
-   "plan": 1,
    "what": "The dog is named in the first line and shown at his worst, before any product.",
-   "kept": "A named underdog in the first breath, shown at his lowest.",
-   "changed": "A rescue puppy becomes Gus, a fiddle-leaf fig, and the line is ours.",
-   "why": "A name makes people care before they know what is being sold; any category with a 'patient' can use it."
+   "beat": 1,
+   "note": "Kept and changed depend on the opening: see hooks in script.json."
   },
   {
    "id": "arrival",
    "t": 23.06,
-   "plan": 2,
    "what": "One line of backstory: how long they have lived together.",
    "kept": "One short line of shared history.",
    "changed": "Last year becomes two springs ago.",
-   "why": "Time together raises the stakes without slowing the opening."
+   "beat": 2
   },
   {
    "id": "costs",
    "t": 52.18,
-   "plan": 3,
    "what": "The problem is told as a list of household costs, one shot per item.",
    "kept": "Three concrete costs, one cut per spoken item.",
    "changed": "Sleepless nights and ruined rugs become brown spots, fallen leaves and a water ring on a landlord's rug.",
-   "why": "Specific damage is believable; 'struggling' on its own is not."
+   "beat": 3
   },
   {
    "id": "not_his_fault",
    "t": 58.98,
-   "plan": 4,
    "what": "The narrator clears the dog of blame.",
    "kept": "The owner takes the side of the underdog.",
    "changed": "Same beat, held on a hand under one leaf.",
-   "why": "It moves the blame to the old routine, which is what the product replaces."
+   "beat": 4
   },
   {
    "id": "tried",
    "t": 62.46,
-   "plan": 4,
    "what": "Failed fixes are named one by one, then dismissed.",
    "kept": "Named failed fixes, a cut on each, then one line of defeat.",
    "changed": "Foods, supplements and vet visits become misting, a grow light and three different pots.",
-   "why": "Each failed fix answers 'why not just do X' before the viewer asks it."
+   "beat": 4
   },
   {
    "id": "discovery",
    "t": 94.34,
-   "plan": 5,
    "what": "The product arrives as a discovery, at the door.",
    "kept": "Discovery line, then the product on the doorstep.",
    "changed": "A food box becomes a Mossbell planter box.",
-   "why": "The product enters as the turn of the story, not as a pitch."
+   "beat": 5
   },
   {
    "id": "mechanism",
    "t": 96.04,
-   "plan": 5,
    "what": "One plain line on how the product works.",
    "kept": "One mechanism line in everyday words.",
    "changed": "Fresh food delivered becomes watering from below with a dial.",
-   "why": "One concrete reason it works is enough at this length."
+   "beat": 5
   },
   {
    "id": "change",
    "t": 114.82,
-   "plan": 5,
    "what": "The change is shown on the same dog in new places.",
    "kept": "The same character, visibly better.",
    "changed": "No timing or health claim: we show a new leaf.",
-   "why": "A fictional brand has no customer results to quote."
+   "beat": 5
   },
   {
    "id": "ask",
    "t": 120.32,
-   "plan": 6,
    "what": "The ask speaks to anyone with the same problem, then gives the offer.",
    "kept": "An ask aimed at anyone with the same problem, then the offer.",
    "changed": "First-order discount becomes free shipping on the first planter (fictional offer).",
-   "why": "The ask names the viewer's own situation."
+   "beat": 6
   },
   {
    "id": "tag",
    "t": 127.7,
-   "plan": 6,
    "what": "The dog's name signs off the ad.",
    "kept": "The character's name signs off the ad.",
    "changed": "Cactus approved becomes Gus approved.",
-   "why": "The name comes back at the end, so the opening line pays off."
-  }
- ],
- "commentary": [
-  {
-   "t": 25.72,
-   "quote": "So right away, we're going straight into a story."
-  },
-  {
-   "t": 69.04,
-   "quote": "There's like an edit every single second"
+   "beat": 6
   }
  ]
 }

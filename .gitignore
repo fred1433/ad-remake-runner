@@ -4,3 +4,5 @@ out/
 __pycache__/
 .pytest_cache/
 runs/*.log
+runs/clean_run*.json
+runs/recorded_run_*.json

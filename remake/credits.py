@@ -65,42 +65,82 @@ def sign(payload: bytes, secret: str, ts: int | None = None) -> str:
 
 
 def verify(payload: bytes, header: str, secret: str, tolerance: int = 300, now: int | None = None) -> dict:
-    parts = dict(p.split("=", 1) for p in header.split(",") if "=" in p)
-    ts = int(parts.get("t", "0"))
+    """Checks a Stripe-Signature header. During a secret rotation Stripe sends one
+    v1 signature per active secret: the event is accepted if any of them matches."""
+    ts, sigs = None, []
+    for part in header.split(","):
+        k, _, v = part.strip().partition("=")
+        if k == "t":
+            ts = int(v) if v.isdigit() else None
+        elif k == "v1":
+            sigs.append(v)
+    if ts is None or not sigs:
+        raise ValueError("signature header has no timestamp or no v1 signature")
     now = int(time.time()) if now is None else now
     if abs(now - ts) > tolerance:
         raise ValueError("signature timestamp outside tolerance")
     expected = hmac.new(secret.encode(), f"{ts}.".encode() + payload, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(expected, parts.get("v1", "")):
+    if not any(hmac.compare_digest(expected, s) for s in sigs):
         raise ValueError("signature mismatch")
     return json.loads(payload)
 
 
-CREDITING = {"checkout.session.completed", "payment_intent.succeeded"}
+CHECKOUT = {"checkout.session.completed", "checkout.session.async_payment_succeeded"}
+CREDITING = CHECKOUT | {"payment_intent.succeeded"}
+
+
+def _purchase(conn, event):
+    """What this event would credit, or the reason it credits nothing."""
+    obj = event["data"]["object"]
+    if event["type"] in CHECKOUT:
+        payment = obj.get("payment_intent")
+        if obj.get("payment_status") != "paid":
+            return payment, None, f"ignored: payment_status is {obj.get('payment_status')!r}, not 'paid'"
+    else:
+        payment = obj.get("id")
+        if obj.get("status", "succeeded") != "succeeded":
+            return payment, None, f"ignored: payment intent status is {obj.get('status')!r}"
+    if not payment:
+        return None, None, "ignored: no payment reference"
+    meta = obj.get("metadata") or {}
+    if "credits" not in meta or "account_id" not in meta:
+        return payment, None, "ignored: no credits in metadata"
+    raw = str(meta["credits"]).strip()
+    if not raw.isdigit() or int(raw) <= 0:
+        return payment, None, f"ignored: credits must be a positive whole number, got {meta['credits']!r}"
+    if not conn.execute("select 1 from accounts where id=%s", (meta["account_id"],)).fetchone():
+        return payment, None, f"ignored: unknown account {meta['account_id']!r}"
+    return payment, (meta["account_id"], int(raw)), None
 
 
 def handle_stripe_event(conn, event: dict) -> str:
-    """Applies one verified event. Returns what it did.
+    """Applies one verified event and returns what it did. Never raises on an
+    event it does not use: that event is recorded with the reason, and the
+    webhook answers 200 so Stripe stops retrying it.
 
     Credits are keyed on the payment intent, not on the event: a replayed event,
-    the same event delivered twice at once, or the two event types for one
-    payment arriving in either order all end in a single purchase row."""
-    obj = event["data"]["object"]
-    payment = obj.get("payment_intent") if event["type"] == "checkout.session.completed" else obj.get("id")
+    the same event delivered twice at once, or two event types for one payment
+    arriving in either order all end in a single purchase row. A checkout
+    session credits only once it is paid."""
     with conn.transaction():
         seen = conn.execute(
-            "insert into stripe_events (event_id, type, payment_ref, effect) values (%s,%s,%s,'pending')"
+            "insert into stripe_events (event_id, type, payment_ref, effect) values (%s,%s,null,'pending')"
             " on conflict (event_id) do nothing returning event_id",
-            (event["id"], event["type"], payment)).fetchone()
+            (event["id"], event["type"])).fetchone()
         if not seen:
             return "duplicate event: ignored"
-        effect = "ignored type"
+        payment, effect = None, "ignored type"
         if event["type"] in CREDITING:
-            meta = obj.get("metadata") or {}
-            row = conn.execute(
-                "insert into ledger (account_id, kind, amount, idempotency_key) values (%s,'purchase',%s,%s)"
-                " on conflict (idempotency_key) do nothing returning id",
-                (meta["account_id"], int(meta["credits"]), f"purchase:{payment}")).fetchone()
-            effect = f"credited {meta['credits']}" if row else "payment already credited"
-        conn.execute("update stripe_events set effect=%s where event_id=%s", (effect, event["id"]))
+            payment, credit, why = _purchase(conn, event)
+            if credit is None:
+                effect = why
+            else:
+                account, amount = credit
+                row = conn.execute(
+                    "insert into ledger (account_id, kind, amount, idempotency_key) values (%s,'purchase',%s,%s)"
+                    " on conflict (idempotency_key) do nothing returning id",
+                    (account, amount, f"purchase:{payment}")).fetchone()
+                effect = f"credited {amount}" if row else "payment already credited"
+        conn.execute("update stripe_events set effect=%s, payment_ref=%s where event_id=%s",
+                     (effect, payment, event["id"]))
         return effect

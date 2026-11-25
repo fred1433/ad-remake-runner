@@ -26,15 +26,15 @@ def job(conn, job_id):
     return conn.execute("select * from jobs where id=%s", (job_id,)).fetchone()
 
 
-def kill_worker_at(dsn, job_id, point):
-    r = subprocess.run([sys.executable, "-m", "tests.fakes", dsn, str(job_id), point], cwd=ROOT,
+def kill_worker_at(dsn, job_id, point, faults=None):
+    r = subprocess.run([sys.executable, "-m", "tests.fakes", dsn, str(job_id), point] + ([json.dumps(faults)] if faults else []), cwd=ROOT,
                        env={**os.environ, "PYTHONPATH": str(ROOT)}, capture_output=True, text=True)
     assert r.returncode == -9, r.stderr  # really killed by SIGKILL, no cleanup ran
 
 
-# ------------------------------------------------------------------ one failed plan
+# ------------------------------------------------------------------ one failed clip
 
-def test_only_the_failed_plan_is_redone(dsn, conn):
+def test_only_the_failed_clip_is_redone(dsn, conn):
     jid = new_job(conn)
     _, status = make_worker(dsn, "w1", faults={"clip:04": ["fail"]}).run_once()
     assert status == "succeeded"
@@ -108,7 +108,7 @@ def test_killed_worker_job_is_taken_over_after_the_lease(dsn, conn):
     assert job(conn, jid)["fence"] == 2
     took = events(conn, jid, "lease_taken_over")
     assert took[0]["detail"]["previous_owner"] == "worker-killed"
-    assert submissions(conn, jid) == {c: 1 for c in CLIPS}  # plans 1 and 2 were kept, not redone
+    assert submissions(conn, jid) == {c: 1 for c in CLIPS}  # clips 1 and 2 were kept, not redone
     assert len(charges(conn, jid)) == 1
 
 

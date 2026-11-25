@@ -1,12 +1,15 @@
 {
  "brand": "Mossbell",
- "brand_note": "Fictional brand made up for this demo. Gus, the narrator and the offer are fictional too.",
+ "brand_note": "Fictional brand made up for this demo. Gus, the narrator and the offer are fictional too. The brand name is typeset by the edit step; no storyboard still carries it.",
  "voice": {
   "engine": "Kokoro-82M (local)",
   "model": "hexgrad/Kokoro-82M",
   "lang": "a",
   "voice": "af_heart",
-  "speed": 1.06
+  "speed": 1.06,
+  "lexicon": {
+   "Mossbell": "/mˈɔsbˌɛl/"
+  }
  },
  "fps": 30,
  "size": [
@@ -26,7 +29,10 @@
       0.35
      ]
     }
-   ]
+   ],
+   "kept": "A named underdog in the first breath, shown at his lowest.",
+   "changed": "A rescue puppy becomes Gus, a fiddle-leaf fig; the line is ours.",
+   "call": "A name makes people care before they know what is being sold. Same device as the source, so this is the control the other two openings are tested against."
   },
   "B": {
    "label": "Confession",
@@ -40,13 +46,16 @@
       0.55
      ]
     }
-   ]
+   ],
+   "kept": "The underdog named in the first line, at his lowest.",
+   "changed": "Told as a confession: she nearly put him out on the curb.",
+   "call": "A confession makes the viewer ask what changed her mind, and the body answers it."
   },
   "C": {
-   "label": "Contrarian fact",
+   "label": "Reversal",
    "fragments": [
     {
-     "text": "Nobody tells you fiddle-leaf figs drown.",
+     "text": "Gus wasn't thirsty. He was drowning.",
      "image": "h_c",
      "motion": "push_fast",
      "focal": [
@@ -54,10 +63,14 @@
       0.6
      ]
     }
-   ]
+   ],
+   "kept": "The underdog named in the first line, at his lowest.",
+   "changed": "Opens on a reversal: the problem was too much water, not too little.",
+   "call": "It corrects what most owners assume, so the viewer stays for the reason."
   }
  },
- "plans": [
+ "tagline": "Self-watering planters",
+ "beats": [
   {
    "id": 1,
    "name": "Opening",
@@ -76,7 +89,8 @@
       0.5
      ]
     }
-   ]
+   ],
+   "call": "One line of shared history raises the stakes without slowing the opening. It sits on the widest shot of the film, so the room reads before the close-ups."
   },
   {
    "id": 3,
@@ -111,7 +125,8 @@
       0.4
      ]
     }
-   ]
+   ],
+   "call": "Specific damage is believable; 'struggling' on its own is not. One cut per spoken item, on its first word: the cut follows the voice, not a clock."
   },
   {
    "id": 4,
@@ -166,7 +181,8 @@
      ],
      "pause": 0.35
     }
-   ]
+   ],
+   "call": "Clearing Gus moves the blame to the old routine, and each failed fix answers 'why not just do X' before the viewer asks. A cut on each fix, then the longest pause of the body after the line of defeat."
   },
   {
    "id": 5,
@@ -179,7 +195,8 @@
      "focal": [
       0.45,
       0.62
-     ]
+     ],
+     "namecard": true
     },
     {
      "text": "It waters him from below, and the little dial tells me when he's thirsty.",
@@ -199,7 +216,8 @@
       0.35
      ]
     }
-   ]
+   ],
+   "call": "The product enters as the turn of the story: a plain box at the door, its name typeset on screen by the edit step. One mechanism line, shown on the dial. No health claim: a fictional brand has no results to quote, so the change is a new leaf."
   },
   {
    "id": 6,
@@ -220,7 +238,7 @@
      "motion": "hold",
      "focal": [
       0.5,
-      0.7
+      0.25
      ],
      "endcard": true
     },
@@ -230,12 +248,13 @@
      "motion": "hold",
      "focal": [
       0.5,
-      0.7
+      0.25
      ],
      "endcard": true,
      "tag": true
     }
-   ]
+   ],
+   "call": "The ask names the viewer's own situation, over the recovered plant. Then the name card, and Gus's name signs off, so the opening pays off."
   }
  ]
 }
