@@ -26,6 +26,8 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m pytest -q                # the runner's properties, against a real Postgres
 ```
 
+Keep the clone at a short path: espeak-ng, which Kokoro calls for words it does not know ("Mossbell"), cannot find its data when the venv path is longer than about 160 characters, and the run stops during the voice step.
+
 `film` writes `out/remake_hookA.mp4` (and B, C), a poster per film, and the run trace `runs/recorded_run.json` (`runs/clean_run.json` with `--clean`). The incidents of the recorded run:
 
 - **Opening A**: the clip provider fails plan 4. Plan 4 is retried after 1 s; plans 1 to 3, 5 and 6 are not resubmitted.
