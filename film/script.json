@@ -1,0 +1,241 @@
+{
+ "brand": "Mossbell",
+ "brand_note": "Fictional brand made up for this demo. Gus, the narrator and the offer are fictional too.",
+ "voice": {
+  "engine": "Kokoro-82M (local)",
+  "model": "hexgrad/Kokoro-82M",
+  "lang": "a",
+  "voice": "af_heart",
+  "speed": 1.06
+ },
+ "fps": 30,
+ "size": [
+  1080,
+  1920
+ ],
+ "hooks": {
+  "A": {
+   "label": "Named underdog",
+   "fragments": [
+    {
+     "text": "This sad, droopy little fig is Gus.",
+     "image": "h_a",
+     "motion": "push_fast",
+     "focal": [
+      0.5,
+      0.35
+     ]
+    }
+   ]
+  },
+  "B": {
+   "label": "Confession",
+   "fragments": [
+    {
+     "text": "I almost put Gus out on the curb.",
+     "image": "h_b",
+     "motion": "push_fast",
+     "focal": [
+      0.5,
+      0.55
+     ]
+    }
+   ]
+  },
+  "C": {
+   "label": "Contrarian fact",
+   "fragments": [
+    {
+     "text": "Nobody tells you fiddle-leaf figs drown.",
+     "image": "h_c",
+     "motion": "push_fast",
+     "focal": [
+      0.45,
+      0.6
+     ]
+    }
+   ]
+  }
+ },
+ "plans": [
+  {
+   "id": 1,
+   "name": "Opening",
+   "hook": true
+  },
+  {
+   "id": 2,
+   "name": "Arrival",
+   "fragments": [
+    {
+     "text": "He moved in with me two springs ago.",
+     "image": "b01",
+     "motion": "pull",
+     "focal": [
+      0.42,
+      0.5
+     ]
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "What it costs",
+   "fragments": [
+    {
+     "text": "I adore him, but: brown spots,",
+     "image": "b02",
+     "motion": "push",
+     "focal": [
+      0.6,
+      0.45
+     ],
+     "pause": 0.08
+    },
+    {
+     "text": "leaves on the floor every morning,",
+     "image": "b03",
+     "motion": "fall",
+     "focal": [
+      0.45,
+      0.6
+     ],
+     "pause": 0.08
+    },
+    {
+     "text": "and a water ring on my landlord's rug.",
+     "image": "b04",
+     "motion": "push",
+     "focal": [
+      0.45,
+      0.4
+     ]
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "name": "Tried it all",
+   "fragments": [
+    {
+     "text": "I knew it wasn't his fault.",
+     "image": "b05",
+     "motion": "push",
+     "focal": [
+      0.55,
+      0.45
+     ]
+    },
+    {
+     "text": "I tried it all. Misting.",
+     "image": "b06",
+     "motion": "drift",
+     "focal": [
+      0.6,
+      0.35
+     ],
+     "pause": 0.1
+    },
+    {
+     "text": "A grow light.",
+     "image": "b07",
+     "motion": "pull",
+     "focal": [
+      0.45,
+      0.4
+     ],
+     "pause": 0.1
+    },
+    {
+     "text": "Three different pots.",
+     "image": "b08",
+     "motion": "drift",
+     "focal": [
+      0.5,
+      0.55
+     ],
+     "pause": 0.2
+    },
+    {
+     "text": "None of it worked.",
+     "image": "b09",
+     "motion": "pull_slow",
+     "focal": [
+      0.5,
+      0.5
+     ],
+     "pause": 0.35
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "name": "The find",
+   "fragments": [
+    {
+     "text": "That's when I found Mossbell.",
+     "image": "b10",
+     "motion": "push",
+     "focal": [
+      0.45,
+      0.62
+     ]
+    },
+    {
+     "text": "It waters him from below, and the little dial tells me when he's thirsty.",
+     "image": "b11",
+     "motion": "push",
+     "focal": [
+      0.62,
+      0.72
+     ]
+    },
+    {
+     "text": "Now he's putting out new leaves.",
+     "image": "b12",
+     "motion": "rise",
+     "focal": [
+      0.6,
+      0.35
+     ]
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "name": "The ask",
+   "fragments": [
+    {
+     "text": "If your plant's been struggling, try it.",
+     "image": "b13",
+     "motion": "pull",
+     "focal": [
+      0.45,
+      0.5
+     ]
+    },
+    {
+     "text": "Link below. First planter ships free.",
+     "image": "b14",
+     "motion": "hold",
+     "focal": [
+      0.5,
+      0.7
+     ],
+     "endcard": true
+    },
+    {
+     "text": "Gus approved.",
+     "image": "b14",
+     "motion": "hold",
+     "focal": [
+      0.5,
+      0.7
+     ],
+     "endcard": true,
+     "tag": true
+    }
+   ]
+  }
+ ]
+}

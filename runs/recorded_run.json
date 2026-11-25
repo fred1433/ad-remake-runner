@@ -1,0 +1,1175 @@
+{
+ "recorded_at": "2026-11-25T15:16:56+00:00",
+ "postgres": "14.23 (Homebrew)",
+ "lease_s": 6.0,
+ "retry": {
+  "base_s": 1.0,
+  "cap_s": 8.0,
+  "max_attempts": 4
+ },
+ "credits_per_film": 60,
+ "clean": false,
+ "stripe": [
+  {
+   "event_id": "evt_local_checkout_1",
+   "type": "checkout.session.completed",
+   "effect": "credited 500"
+  },
+  {
+   "event_id": "evt_local_checkout_1",
+   "type": "checkout.session.completed",
+   "effect": "duplicate event: ignored"
+  },
+  {
+   "event_id": "evt_local_pi_1",
+   "type": "payment_intent.succeeded",
+   "effect": "payment already credited"
+  }
+ ],
+ "jobs": [
+  {
+   "id": 1,
+   "hook": "A",
+   "status": "succeeded",
+   "fence": 1,
+   "error": null,
+   "incident": "The clip provider fails plan 4; only plan 4 is redone.",
+   "output": {
+    "film": "out/remake_hookA.mp4",
+    "lufs": -14.8,
+    "frames": 1252,
+    "poster": "out/remake_hookA.jpg",
+    "captions": 39,
+    "duration_s": 41.733
+   },
+   "events": [
+    {
+     "t_ms": 4,
+     "worker": null,
+     "kind": "job_created",
+     "step": null,
+     "detail": {
+      "steps": 12,
+      "credits_held": 60
+     }
+    },
+    {
+     "t_ms": 49,
+     "worker": "worker-1",
+     "kind": "claimed",
+     "step": null,
+     "detail": {
+      "fence": 1,
+      "lease_s": 6.0,
+      "previous_owner": null
+     }
+    },
+    {
+     "t_ms": 94,
+     "worker": "worker-1",
+     "kind": "step_started",
+     "step": "breakdown",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 98,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "breakdown",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 100,
+     "worker": "worker-1",
+     "kind": "step_started",
+     "step": "script",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 103,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "script",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 104,
+     "worker": "worker-1",
+     "kind": "step_started",
+     "step": "voice",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 233,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "voice",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 236,
+     "worker": "worker-1",
+     "kind": "step_started",
+     "step": "characters",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 241,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "characters",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 243,
+     "worker": "worker-1",
+     "kind": "step_started",
+     "step": "storyboard",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 285,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "storyboard",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 303,
+     "worker": "worker-1",
+     "kind": "provider_submitted",
+     "step": "clip:01",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_8dbf2de39770"
+     }
+    },
+    {
+     "t_ms": 6674,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "clip:01",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 6699,
+     "worker": "worker-1",
+     "kind": "provider_submitted",
+     "step": "clip:02",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_95eee5006b3e"
+     }
+    },
+    {
+     "t_ms": 12536,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "clip:02",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 12546,
+     "worker": "worker-1",
+     "kind": "provider_submitted",
+     "step": "clip:03",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_74fde21d5898"
+     }
+    },
+    {
+     "t_ms": 30430,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "clip:03",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 30438,
+     "worker": "worker-1",
+     "kind": "provider_submitted",
+     "step": "clip:04",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_83e2d7fc7c2d"
+     }
+    },
+    {
+     "t_ms": 30445,
+     "worker": "worker-1",
+     "kind": "provider_failed",
+     "step": "clip:04",
+     "detail": {
+      "error": "503 no capacity, generation not started",
+      "request_id": "req_83e2d7fc7c2d"
+     }
+    },
+    {
+     "t_ms": 30446,
+     "worker": "worker-1",
+     "kind": "retry_scheduled",
+     "step": "clip:04",
+     "detail": {
+      "error": "provider failed clip:04: 503 no capacity, generation not started",
+      "attempt": 1,
+      "next_in_s": 1.0,
+      "max_attempts": 4
+     }
+    },
+    {
+     "t_ms": 31467,
+     "worker": "worker-1",
+     "kind": "provider_submitted",
+     "step": "clip:04",
+     "detail": {
+      "attempt": 2,
+      "request_id": "req_129bc0a85e2a"
+     }
+    },
+    {
+     "t_ms": 52784,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "clip:04",
+     "detail": {
+      "attempt": 2
+     }
+    },
+    {
+     "t_ms": 52973,
+     "worker": "worker-1",
+     "kind": "provider_submitted",
+     "step": "clip:05",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_e99b65c5b8fb"
+     }
+    },
+    {
+     "t_ms": 73664,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "clip:05",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 73689,
+     "worker": "worker-1",
+     "kind": "provider_submitted",
+     "step": "clip:06",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_d78f635d4c98"
+     }
+    },
+    {
+     "t_ms": 97925,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "clip:06",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 97927,
+     "worker": "worker-1",
+     "kind": "step_started",
+     "step": "edit",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182186,
+     "worker": "worker-1",
+     "kind": "step_done",
+     "step": "edit",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182195,
+     "worker": "worker-1",
+     "kind": "job_succeeded",
+     "step": null,
+     "detail": {
+      "charge": {
+       "id": 3,
+       "amount": -60,
+       "idempotency_key": "charge:job:1"
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "name": "breakdown",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "script",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "voice",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "characters",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "storyboard",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:01",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:02",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:03",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:04",
+     "status": "done",
+     "attempts": 2
+    },
+    {
+     "name": "clip:05",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:06",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "edit",
+     "status": "done",
+     "attempts": 1
+    }
+   ],
+   "provider_submissions": {
+    "clip:01": 1,
+    "clip:02": 1,
+    "clip:03": 1,
+    "clip:04": 2,
+    "clip:05": 1,
+    "clip:06": 1
+   },
+   "hold": {
+    "amount": 60,
+    "status": "consumed"
+   }
+  },
+  {
+   "id": 2,
+   "hook": "B",
+   "status": "succeeded",
+   "fence": 2,
+   "error": null,
+   "incident": "The worker process is killed (SIGKILL) after plan 2; another worker takes over when the lease runs out.",
+   "output": {
+    "film": "out/remake_hookB.mp4",
+    "lufs": -14.8,
+    "frames": 1252,
+    "poster": "out/remake_hookB.jpg",
+    "captions": 39,
+    "duration_s": 41.733
+   },
+   "events": [
+    {
+     "t_ms": 6,
+     "worker": null,
+     "kind": "job_created",
+     "step": null,
+     "detail": {
+      "steps": 12,
+      "credits_held": 60
+     }
+    },
+    {
+     "t_ms": 182701,
+     "worker": "worker-2",
+     "kind": "claimed",
+     "step": null,
+     "detail": {
+      "fence": 1,
+      "lease_s": 6.0,
+      "previous_owner": null
+     }
+    },
+    {
+     "t_ms": 182708,
+     "worker": "worker-2",
+     "kind": "step_started",
+     "step": "breakdown",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182711,
+     "worker": "worker-2",
+     "kind": "step_done",
+     "step": "breakdown",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182713,
+     "worker": "worker-2",
+     "kind": "step_started",
+     "step": "script",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182716,
+     "worker": "worker-2",
+     "kind": "step_done",
+     "step": "script",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182717,
+     "worker": "worker-2",
+     "kind": "step_started",
+     "step": "voice",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182774,
+     "worker": "worker-2",
+     "kind": "step_done",
+     "step": "voice",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182779,
+     "worker": "worker-2",
+     "kind": "step_started",
+     "step": "characters",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182784,
+     "worker": "worker-2",
+     "kind": "step_done",
+     "step": "characters",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182785,
+     "worker": "worker-2",
+     "kind": "step_started",
+     "step": "storyboard",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182820,
+     "worker": "worker-2",
+     "kind": "step_done",
+     "step": "storyboard",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 182838,
+     "worker": "worker-2",
+     "kind": "provider_submitted",
+     "step": "clip:01",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_1d62dd35148e"
+     }
+    },
+    {
+     "t_ms": 198095,
+     "worker": "worker-2",
+     "kind": "step_done",
+     "step": "clip:01",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 198105,
+     "worker": "worker-2",
+     "kind": "provider_submitted",
+     "step": "clip:02",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_9a0f44fb4ea1"
+     }
+    },
+    {
+     "t_ms": 211033,
+     "worker": "worker-2",
+     "kind": "step_done",
+     "step": "clip:02",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 211045,
+     "worker": "supervisor",
+     "kind": "worker_process_exited",
+     "step": null,
+     "detail": {
+      "note": "killed with SIGKILL, its lease is left to expire",
+      "process": "worker-2",
+      "returncode": -9
+     }
+    },
+    {
+     "t_ms": 217065,
+     "worker": "worker-3",
+     "kind": "lease_taken_over",
+     "step": null,
+     "detail": {
+      "fence": 2,
+      "lease_s": 6.0,
+      "previous_owner": "worker-2"
+     }
+    },
+    {
+     "t_ms": 217080,
+     "worker": "worker-3",
+     "kind": "provider_submitted",
+     "step": "clip:03",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_ef23aa245248"
+     }
+    },
+    {
+     "t_ms": 242193,
+     "worker": "worker-3",
+     "kind": "step_done",
+     "step": "clip:03",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 242390,
+     "worker": "worker-3",
+     "kind": "provider_submitted",
+     "step": "clip:04",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_b12b62575121"
+     }
+    },
+    {
+     "t_ms": 301455,
+     "worker": "worker-3",
+     "kind": "step_done",
+     "step": "clip:04",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 301510,
+     "worker": "worker-3",
+     "kind": "provider_submitted",
+     "step": "clip:05",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_92b4f00fe81e"
+     }
+    },
+    {
+     "t_ms": 356660,
+     "worker": "worker-3",
+     "kind": "step_done",
+     "step": "clip:05",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 356671,
+     "worker": "worker-3",
+     "kind": "provider_submitted",
+     "step": "clip:06",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_27a7403cec65"
+     }
+    },
+    {
+     "t_ms": 412011,
+     "worker": "worker-3",
+     "kind": "step_done",
+     "step": "clip:06",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 412012,
+     "worker": "worker-3",
+     "kind": "step_started",
+     "step": "edit",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573223,
+     "worker": "worker-3",
+     "kind": "step_done",
+     "step": "edit",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573228,
+     "worker": "worker-3",
+     "kind": "job_succeeded",
+     "step": null,
+     "detail": {
+      "charge": {
+       "id": 4,
+       "amount": -60,
+       "idempotency_key": "charge:job:2"
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "name": "breakdown",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "script",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "voice",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "characters",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "storyboard",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:01",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:02",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:03",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:04",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:05",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:06",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "edit",
+     "status": "done",
+     "attempts": 1
+    }
+   ],
+   "provider_submissions": {
+    "clip:01": 1,
+    "clip:02": 1,
+    "clip:03": 1,
+    "clip:04": 1,
+    "clip:05": 1,
+    "clip:06": 1
+   },
+   "hold": {
+    "amount": 60,
+    "status": "consumed"
+   }
+  },
+  {
+   "id": 3,
+   "hook": "C",
+   "status": "succeeded",
+   "fence": 1,
+   "error": null,
+   "incident": "The clip provider answers plan 5 late; the same request is polled, nothing is resubmitted.",
+   "output": {
+    "film": "out/remake_hookC.mp4",
+    "lufs": -14.8,
+    "frames": 1253,
+    "poster": "out/remake_hookC.jpg",
+    "captions": 38,
+    "duration_s": 41.767
+   },
+   "events": [
+    {
+     "t_ms": 24,
+     "worker": null,
+     "kind": "job_created",
+     "step": null,
+     "detail": {
+      "steps": 12,
+      "credits_held": 60
+     }
+    },
+    {
+     "t_ms": 573228,
+     "worker": "worker-4",
+     "kind": "claimed",
+     "step": null,
+     "detail": {
+      "fence": 1,
+      "lease_s": 6.0,
+      "previous_owner": null
+     }
+    },
+    {
+     "t_ms": 573245,
+     "worker": "worker-4",
+     "kind": "step_started",
+     "step": "breakdown",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573249,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "breakdown",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573252,
+     "worker": "worker-4",
+     "kind": "step_started",
+     "step": "script",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573253,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "script",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573255,
+     "worker": "worker-4",
+     "kind": "step_started",
+     "step": "voice",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573334,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "voice",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573335,
+     "worker": "worker-4",
+     "kind": "step_started",
+     "step": "characters",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573341,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "characters",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573342,
+     "worker": "worker-4",
+     "kind": "step_started",
+     "step": "storyboard",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573407,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "storyboard",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 573430,
+     "worker": "worker-4",
+     "kind": "provider_submitted",
+     "step": "clip:01",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_105a2ccee9fc"
+     }
+    },
+    {
+     "t_ms": 600342,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "clip:01",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 600351,
+     "worker": "worker-4",
+     "kind": "provider_submitted",
+     "step": "clip:02",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_7ef70bab1938"
+     }
+    },
+    {
+     "t_ms": 626324,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "clip:02",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 626350,
+     "worker": "worker-4",
+     "kind": "provider_submitted",
+     "step": "clip:03",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_7ed5ecd69735"
+     }
+    },
+    {
+     "t_ms": 692900,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "clip:03",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 692924,
+     "worker": "worker-4",
+     "kind": "provider_submitted",
+     "step": "clip:04",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_013f9eb06420"
+     }
+    },
+    {
+     "t_ms": 775239,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "clip:04",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 775248,
+     "worker": "worker-4",
+     "kind": "provider_submitted",
+     "step": "clip:05",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_8276e3718c8f"
+     }
+    },
+    {
+     "t_ms": 776824,
+     "worker": "worker-4",
+     "kind": "provider_slow",
+     "step": "clip:05",
+     "detail": {
+      "note": "not a failure: the same request is polled again, nothing is resubmitted",
+      "waited_s": 1.5,
+      "request_id": "req_8276e3718c8f"
+     }
+    },
+    {
+     "t_ms": 889002,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "clip:05",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 889032,
+     "worker": "worker-4",
+     "kind": "provider_submitted",
+     "step": "clip:06",
+     "detail": {
+      "attempt": 1,
+      "request_id": "req_dae64002e68b"
+     }
+    },
+    {
+     "t_ms": 972827,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "clip:06",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 972829,
+     "worker": "worker-4",
+     "kind": "step_started",
+     "step": "edit",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 1176172,
+     "worker": "worker-4",
+     "kind": "step_done",
+     "step": "edit",
+     "detail": {
+      "attempt": 1
+     }
+    },
+    {
+     "t_ms": 1176185,
+     "worker": "worker-4",
+     "kind": "job_succeeded",
+     "step": null,
+     "detail": {
+      "charge": {
+       "id": 5,
+       "amount": -60,
+       "idempotency_key": "charge:job:3"
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "name": "breakdown",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "script",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "voice",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "characters",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "storyboard",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:01",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:02",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:03",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:04",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:05",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "clip:06",
+     "status": "done",
+     "attempts": 1
+    },
+    {
+     "name": "edit",
+     "status": "done",
+     "attempts": 1
+    }
+   ],
+   "provider_submissions": {
+    "clip:01": 1,
+    "clip:02": 1,
+    "clip:03": 1,
+    "clip:04": 1,
+    "clip:05": 1,
+    "clip:06": 1
+   },
+   "hold": {
+    "amount": 60,
+    "status": "consumed"
+   }
+  }
+ ],
+ "ledger": [
+  {
+   "id": 1,
+   "kind": "purchase",
+   "amount": 500,
+   "job_id": null,
+   "idempotency_key": "purchase:pi_local_1"
+  },
+  {
+   "id": 3,
+   "kind": "charge",
+   "amount": -60,
+   "job_id": 1,
+   "idempotency_key": "charge:job:1"
+  },
+  {
+   "id": 4,
+   "kind": "charge",
+   "amount": -60,
+   "job_id": 2,
+   "idempotency_key": "charge:job:2"
+  },
+  {
+   "id": 5,
+   "kind": "charge",
+   "amount": -60,
+   "job_id": 3,
+   "idempotency_key": "charge:job:3"
+  }
+ ],
+ "balance": {
+  "balance": 320,
+  "held": 0,
+  "available": 320
+ }
+}
