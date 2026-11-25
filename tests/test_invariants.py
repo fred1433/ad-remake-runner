@@ -1,5 +1,6 @@
 """One test or more per invariant of the README (I1 to I5). Each one broke the
-runner at commit 9ed3142."""
+runner at commit 9ed3142. The scenarios of the second review, which broke
+commit cfa61ab, are in tests/test_review_cfa61ab.py."""
 import os
 import subprocess
 import sys
@@ -10,6 +11,7 @@ import pytest
 
 from remake import credits
 from remake import worker as W
+from remake.export import export_films
 from remake.provider import SimProvider
 from remake.worker import cancel_job
 from tests.conftest import ACCOUNT, charges, events, new_job, submissions
@@ -70,20 +72,14 @@ def test_a_job_never_stays_running_past_its_deadline(dsn, conn):
 
 def test_a_job_past_its_deadline_is_failed_by_any_other_worker(dsn, conn, tmp_path):
     jid = new_job(conn)
-    a = make_worker(dsn, "A", flow=FakeFlow(tmp_path, edit_s=4.0))
-    a.job_deadline_s = 1.0
-    t, box = in_thread(a.run_once)
-    try:
-        time.sleep(1.5)  # A is in its long edit, lease live, deadline passed
-        assert make_worker(dsn, "B").run_once() is None  # nothing to run: B settled the overdue job instead
-        j = job(conn, jid)
-        assert j["status"] == "failed" and "deadline" in j["error"]
-        assert hold(conn, jid) == "released"
-        t.join(3)
-        assert not t.is_alive() and box["r"][1] == "fenced"
-        assert not (tmp_path / "out").exists()
-    finally:
-        t.join(10)
+    a = make_worker(dsn, "A", lease_s=10.0, job_deadline_s=1.0)
+    assert a.claim()["id"] == jid  # A claims, then goes silent: its 10 s lease is still live
+    time.sleep(1.3)
+    assert make_worker(dsn, "B").run_once() is None  # nothing to run: B settled the overdue job instead
+    j = job(conn, jid)
+    assert j["status"] == "failed" and "failed by another worker's claim" in j["error"]
+    assert hold(conn, jid) == "released" and charges(conn, jid) == []
+    assert j["published"] is None
 
 
 # ------------------------------------------------------------------ I2
@@ -137,7 +133,8 @@ def test_a_cancel_during_the_final_edit_publishes_nothing(dsn, conn, tmp_path):
     _, status = w.run_once()
     assert answer["a"] == "cancel_requested"
     assert status == "cancelled" and job(conn, jid)["status"] == "cancelled"
-    assert not (tmp_path / "out" / f"film_{jid}.txt").exists()
+    assert job(conn, jid)["published"] is None
+    assert export_films(conn, tmp_path / "out") == [] and not (tmp_path / "out").exists()
     assert charges(conn, jid) == [] and hold(conn, jid) == "released"
 
 
@@ -159,9 +156,10 @@ def test_a_frozen_heartbeat_stops_the_worker_before_anyone_takes_over(dsn, conn,
         time.sleep(max(0.0, t0 + 1.2 - time.monotonic()))  # now the lease runs out
         _, status = make_worker(dsn, "B", flow=FakeFlow(tmp_path)).run_once()
         assert status == "succeeded"
-        out, took = events(conn, jid, "fenced_out"), events(conn, jid, "lease_taken_over")
-        assert out[0]["worker"] == "A" and out[0]["id"] < took[0]["id"]
-        assert "renewed" in out[0]["detail"]["reason"]
+        assert "renewed" in a.stop_reason
+        took = events(conn, jid, "lease_taken_over")[0]
+        assert [e["kind"] for e in events(conn, jid) if e["worker"] == "A" and e["id"] > took["id"]] == []
+        export_films(conn, tmp_path / "out")
         assert (tmp_path / "out" / f"film_{jid}.txt").read_text() == "rendered under fence 2"
     finally:
         t.join(10)

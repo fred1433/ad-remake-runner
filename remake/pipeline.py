@@ -40,7 +40,7 @@ class FilmPipeline:
         self.script = json.loads((FILM / "script.json").read_text())
 
     def workdir(self, job):
-        """Files of one worker on one job: build/job<id>/f<fence>/. Never shared, never published from here."""
+        """Files of one worker on one job: build/job<id>/f<fence>/. Never shared; never moved or rewritten once the job succeeded."""
         d = self.build / f"job{job['id']}" / f"f{job['fence']}"
         d.mkdir(parents=True, exist_ok=True)
         return d
@@ -101,10 +101,8 @@ class FilmPipeline:
         private = self.workdir(job) / f"remake_hook{hook}.mp4"
         res = media.assemble(clips, v["timeline"], v["wav"], v["total_s"], private, self.script["brand"],
                              self.script["tagline"], self.script["fps"], abort=self.abort)
-        film, poster = ROOT / job["params"]["out"], (ROOT / job["params"]["out"]).with_suffix(".jpg")
-        # published by the runner in the transaction that records this step
-        return {**res, "film": str(film), "poster": str(poster), "rendered": res["film"],
-                "publish": {str(film): res["film"], str(poster): res["poster"]}}
+        # fingerprinted by the runner; recorded as published when the job succeeds; exported to out/ afterwards
+        return {**res, "deliver": {f"remake_hook{hook}.mp4": res["film"], f"remake_hook{hook}.jpg": res["poster"]}}
 
     # ---------------------------------------------------------------- clips
     def clip_spec(self, job, step, outputs):

@@ -5,7 +5,10 @@ Unit: a fictional "credit". Balance = sum(ledger); available = balance - active 
 import hashlib
 import hmac
 import json
+import re
 import time
+
+import psycopg
 
 
 class NotEnoughCredits(Exception):
@@ -90,48 +93,84 @@ CREDITING = CHECKOUT | {"payment_intent.succeeded"}
 
 
 MAX_CREDITS = 1_000_000  # per purchase; also keeps the amount inside the ledger's integer column
+CREDITS_TEXT = re.compile(r"[1-9][0-9]{0,6}")  # ASCII digits only, no sign, space or leading zero
+
+
+class Malformed(Exception):
+    pass
+
+
+def _show(v):
+    """A short, safe description of a value for the recorded reason."""
+    if isinstance(v, str):
+        r = repr(v)
+        return r if len(r) <= 40 else r[:37] + "...'"
+    return "None" if v is None else f"a {type(v).__name__}"
+
+
+def envelope_problem(event):
+    """Why this event cannot be stored or read, or None. Checked before the first
+    INSERT: the payload is an object; id and type are non-empty text; data.object
+    is an object; and every text in it, key or value, at any depth, has no NUL
+    character and encodes as UTF-8 (no lone surrogate)."""
+    if not isinstance(event, dict):
+        return f"the payload is {_show(event)}, not an object"
+    for k in ("id", "type"):
+        if not isinstance(event.get(k), str) or not event[k]:
+            return f"{k} must be non-empty text, got {_show(event.get(k))}"
+    data = event.get("data")
+    if not isinstance(data, dict) or not isinstance(data.get("object"), dict):
+        return "data.object must be an object"
+    stack = [event]
+    while stack:
+        v = stack.pop()
+        if isinstance(v, dict):
+            stack.extend(v.keys())
+            stack.extend(v.values())
+        elif isinstance(v, list):
+            stack.extend(v)
+        elif isinstance(v, str):
+            if "\x00" in v:
+                return "a text contains a NUL character"
+            try:
+                v.encode("utf-8")
+            except UnicodeEncodeError:
+                return "a text is not valid Unicode (lone surrogate)"
+    return None
+
+
+def _text(v):
+    return v if isinstance(v, str) and v else None
 
 
 def _purchase(conn, event):
     """What this event would credit, or the reason it credits nothing."""
     obj = event["data"]["object"]
     if event["type"] in CHECKOUT:
-        payment = obj.get("payment_intent")
-        if not isinstance(payment, str):
-            payment = None
+        payment = _text(obj.get("payment_intent"))
         if obj.get("payment_status") != "paid":
-            return payment, None, f"ignored: payment_status is {obj.get('payment_status')!r}, not 'paid'"
+            return payment, None, f"ignored: payment_status is {_show(obj.get('payment_status'))}, not 'paid'"
     else:
-        payment = obj.get("id")
-        if not isinstance(payment, str):
-            payment = None
+        payment = _text(obj.get("id"))
         if obj.get("status", "succeeded") != "succeeded":
-            return payment, None, f"ignored: payment intent status is {obj.get('status')!r}"
+            return payment, None, f"ignored: payment intent status is {_show(obj.get('status'))}"
     if not payment:
         return None, None, "ignored: no payment reference"
     meta = obj.get("metadata") or {}
     if not isinstance(meta, dict) or "credits" not in meta or "account_id" not in meta:
         return payment, None, "ignored: no credits in metadata"
     raw, account = meta["credits"], meta["account_id"]
-    text = str(raw).strip() if isinstance(raw, (str, int)) and not isinstance(raw, bool) else ""
-    if not (text.isascii() and text.isdigit()) or not 1 <= int(text) <= MAX_CREDITS:
-        return payment, None, f"ignored: credits must be a positive whole number up to {MAX_CREDITS}, got {raw!r}"
-    if not isinstance(account, str):
-        return payment, None, f"ignored: account_id must be text, got {type(account).__name__}"
+    if not (isinstance(raw, str) and CREDITS_TEXT.fullmatch(raw) and int(raw) <= MAX_CREDITS):
+        return payment, None, (f"ignored: credits must be a positive whole number up to {MAX_CREDITS}, written as"
+                               f" text in ASCII digits with no sign, space or leading zero, got {_show(raw)}")
+    if not _text(account):
+        return payment, None, f"ignored: account_id must be non-empty text, got {_show(account)}"
     if not conn.execute("select 1 from accounts where id=%s", (account,)).fetchone():
-        return payment, None, f"ignored: unknown account {account!r}"
-    return payment, (account, int(text)), None
+        return payment, None, f"ignored: unknown account {_show(account)}"
+    return payment, (account, int(raw)), None
 
 
-def handle_stripe_event(conn, event: dict) -> str:
-    """Applies one verified event and returns what it did. Never raises on an
-    event it does not use (I5): that event is recorded with the reason, and the
-    webhook answers 200 so Stripe stops retrying it.
-
-    Credits are keyed on the payment intent, not on the event: a replayed event,
-    the same event delivered twice at once, or two event types for one payment
-    arriving in either order all end in a single purchase row. A checkout
-    session credits only once it is paid."""
+def _apply(conn, event):
     with conn.transaction():
         seen = conn.execute(
             "insert into stripe_events (event_id, type, payment_ref, effect) values (%s,%s,null,'pending')"
@@ -141,10 +180,7 @@ def handle_stripe_event(conn, event: dict) -> str:
             return "duplicate event: ignored"
         payment, effect = None, "ignored type"
         if event["type"] in CREDITING:
-            try:
-                payment, credit, why = _purchase(conn, event)
-            except (KeyError, TypeError, AttributeError, ValueError) as e:
-                payment, credit, why = None, None, f"ignored: malformed event ({type(e).__name__})"
+            payment, credit, why = _purchase(conn, event)
             if credit is None:
                 effect = why
             else:
@@ -157,3 +193,49 @@ def handle_stripe_event(conn, event: dict) -> str:
         conn.execute("update stripe_events set effect=%s, payment_ref=%s where event_id=%s",
                      (effect, payment, event["id"]))
         return effect
+
+
+def _record_malformed(conn, event, why):
+    """Records a malformed event under its id when that id can be stored; never raises,
+    except on a database outage."""
+    effect = f"ignored: malformed event ({why})"
+    eid = event.get("id") if isinstance(event, dict) else None
+    etype = event.get("type") if isinstance(event, dict) else None
+    if envelope_problem({"id": eid, "type": etype if isinstance(etype, str) and etype else "?", "data": {"object": {}}}):
+        return effect + "; not recorded: its id cannot be stored"
+    try:
+        with conn.transaction():
+            row = conn.execute("insert into stripe_events (event_id, type, payment_ref, effect) values (%s,%s,null,%s)"
+                               " on conflict (event_id) do nothing returning event_id",
+                               (eid, etype if isinstance(etype, str) and etype else "?", effect)).fetchone()
+        return effect if row else "duplicate event: ignored"
+    except psycopg.OperationalError:
+        raise
+    except Exception as e:  # noqa: BLE001
+        return effect + f"; not recorded ({type(e).__name__})"
+
+
+def handle_stripe_event(conn, event) -> str:
+    """Applies one verified event and returns what it did (I5).
+
+    The whole envelope is checked before the first INSERT (envelope_problem). An
+    event the runner does not use, or cannot read, is recorded with the reason and
+    the webhook answers 200, so Stripe stops retrying it. Any exception other than
+    a database connection or timeout error (psycopg.OperationalError) is caught
+    and the event is classed "ignored: malformed event (unexpected <error>)". A
+    database outage still raises, so the webhook answers an error and Stripe
+    retries later instead of losing a paid purchase.
+
+    Credits are keyed on the payment intent, not on the event: a replayed event,
+    the same event delivered twice at once, or two event types for one payment
+    arriving in either order all end in a single purchase row. A checkout
+    session credits only once it is paid."""
+    try:
+        why = envelope_problem(event)
+        if why:
+            return _record_malformed(conn, event, why)
+        return _apply(conn, event)
+    except psycopg.OperationalError:
+        raise
+    except Exception as e:  # noqa: BLE001 - the safety net of I5
+        return _record_malformed(conn, event, f"unexpected {type(e).__name__}")

@@ -132,8 +132,9 @@ def test_a_stalled_worker_cannot_write_after_takeover(dsn, conn):
     _, status = make_worker(dsn, "rescuer").run_once()
     assert status == "succeeded"
     t.join()
-    assert result["r"][1] == "fenced"
-    assert events(conn, jid, "fenced_out")[0]["worker"] == "stalled"
+    assert result["r"][1] == "fenced" and "lease lost" in slow.stop_reason
+    took = events(conn, jid, "lease_taken_over")[0]
+    assert [e["kind"] for e in events(conn, jid) if e["worker"] == "stalled" and e["id"] > took["id"]] == []
     assert len(charges(conn, jid)) == 1
     assert submissions(conn, jid) == {c: 1 for c in CLIPS}
 

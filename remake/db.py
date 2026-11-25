@@ -30,6 +30,8 @@ create table jobs (
   cancel_requested boolean not null default false,
   error text,
   output jsonb,
+  -- path, size and SHA-256 of each delivered file, written with 'succeeded' and the charge (I3)
+  published jsonb check (published is null or status = 'succeeded'),
   created_at timestamptz not null default clock_timestamp(),
   updated_at timestamptz not null default clock_timestamp()
 );

@@ -7,14 +7,17 @@ took the job over, can no longer change anything. If its heartbeat cannot renew
 the lease, or has not renewed it for two thirds of its length, the worker stops
 instead of working on without one.
 
-A step writes into a folder named after the job and the worker's fence. The film
-is published only by the transaction that charges the job and marks it
-succeeded, after the cancel flag is read again under the same lock. The
-invariants are listed in the README (I1 to I5).
+A step writes into a folder named after the job and the worker's fence, and
+the runner fingerprints the files it delivers inside that step. The worker
+never writes anywhere else: "published" is a column (path and SHA-256 of each
+delivered file) written by the transaction that records the last step, charges
+the job and marks it succeeded, after the cancel flag is read again under the
+same lock. Copying those files to out/ is an export done afterwards from the
+database (remake/export.py). The invariants are listed in the README (I1 to I5).
 """
+import hashlib
 import json
 import os
-import shutil
 import signal
 import threading
 import time
@@ -164,6 +167,8 @@ class Worker:
         self._hb_stop = threading.Event()
         self._lost = threading.Event()
         self._lost_reason = None
+        self._outcome = None  # 'failed' when the heartbeat failed the job at its deadline
+        self.stop_reason = None  # why the last process() stopped early; kept in memory, never written
         self._renewed_at = time.monotonic()
         self._resumed = set()
 
@@ -209,18 +214,37 @@ class Worker:
 
     # ------------------------------------------------------------ lease
     def _heartbeat(self):
+        """Renews the lease every third of it, never past the job's deadline (I1). At
+        the first beat after the deadline it fails the job itself (hold released,
+        open provider calls abandoned), then stops the worker and its subprocesses."""
         try:
             with db.connect(self.dsn, app=f"heartbeat:{self.name}", statement_timeout_s=max(0.2, self.lease_s / 3),
                             connect_timeout_s=max(2, round(self.lease_s / 3))) as c:
                 while not self._hb_stop.wait(self.lease_s / 3):
                     t = time.monotonic()
                     n = c.execute("update jobs set lease_expires_at=clock_timestamp() + make_interval(secs => %s),"
-                                  " lease_renewed_at=clock_timestamp() where id=%s and fence=%s and status='running'",
+                                  " lease_renewed_at=clock_timestamp() where id=%s and fence=%s and status='running'"
+                                  " and deadline_at > clock_timestamp()",
                                   (self.lease_s, self.job, self.fence)).rowcount
-                    if n == 0:
-                        self._lose("the job is no longer this worker's")
-                        return
-                    self._renewed_at = t
+                    if n == 1:
+                        self._renewed_at = t
+                        continue
+                    why = "the job is no longer this worker's"
+                    with c.transaction():
+                        r = c.execute("select fence, status, deadline_at <= clock_timestamp() as overdue"
+                                      " from jobs where id=%s for update", (self.job,)).fetchone()
+                        if r["fence"] == self.fence and r["status"] == "running" and r["overdue"] \
+                                and not self._hb_stop.is_set():
+                            cur = c.execute("select name from steps where job_id=%s and status<>'done'"
+                                            " order by seq limit 1", (self.job,)).fetchone()
+                            step = cur["name"] if cur else None
+                            _settle_failed(c, self.job, self.name, _deadline_msg(c, self.job) + (
+                                f"; failed by its worker's heartbeat during {step}" if step else
+                                "; failed by its worker's heartbeat"), step)
+                            self._outcome = "failed"
+                            why = "the job passed its deadline; the heartbeat failed it"
+                    self._lose(why)
+                    return
         except Exception as e:  # noqa: BLE001 - any failure means the lease is no longer renewed
             self._lose(f"heartbeat could not renew the lease ({type(e).__name__})")
 
@@ -277,16 +301,16 @@ class Worker:
         self.job, self.fence = job_id, fence
         self._hb_stop.clear()
         self._lost.clear()
+        self._outcome = self.stop_reason = None
         self.impl.abort = self._lost  # long steps stop their subprocesses when the lease is lost
         for target in (self._heartbeat, self._watchdog):
             threading.Thread(target=target, daemon=True).start()
         try:
             with db.connect(self.dsn) as c:
                 return self._loop(c)
-        except Fenced as e:
-            with db.connect(self.dsn) as c:
-                log(c, self.job, self.name, "fenced_out", reason=str(e))
-            return "fenced"
+        except Fenced as e:  # I4: a worker that lost the job writes nothing more, not even this
+            self.stop_reason = str(e)
+            return self._outcome or "fenced"
         finally:
             self._hb_stop.set()
 
@@ -308,9 +332,9 @@ class Worker:
                             " lost its lease mid-step); not picked up again"), step["name"])
             if overdue:
                 return self._fail_overdue(c)
-            if step is None:
-                self._checkpoint("before_succeed")
-                return self._succeed(c)
+            if step is None:  # a job with no step at all; otherwise the last step's record settles it
+                with self.owned(c):
+                    return self._settle_success(c)
             if step["wait_s"] and float(step["wait_s"]) > 0:
                 self._sleep(float(step["wait_s"]))
                 continue
@@ -327,7 +351,9 @@ class Worker:
             if out is None:
                 continue
             self._checkpoint(f"{step['name']}:ran")
-            self._done(c, step, out)
+            settled = self._done(c, step, out)
+            if settled:
+                return settled
             self._checkpoint(step["name"])
 
     def _fail_overdue(self, c):
@@ -348,8 +374,15 @@ class Worker:
             raise Fenced(f"job {self.job}: lease lost, {self._lost_reason}")
 
     def _done(self, c, step, out):
-        """Records the step. Files it asks to publish are published by _succeed (I3)."""
-        with self.owned(c):
+        """Records the step. The record of the last step is also the job's outcome, in
+        the same transaction (I3): no state 'every step done, job still running' exists,
+        so a worker killed before that commit leaves the last step unfinished, under
+        the step ceilings of I2. Returns the outcome, or None while steps remain."""
+        left = c.execute("select count(*) as n from steps where job_id=%s and status<>'done' and name<>%s",
+                         (self.job, step["name"])).fetchone()["n"]
+        if left == 0:
+            self._checkpoint("before_succeed")
+        with self.owned(c) as r:
             c.execute("update steps set status='done', output=%s::jsonb, next_attempt_at=null, last_error=null"
                       " where job_id=%s and name=%s", (json.dumps(out), self.job, step["name"]))
             if out.get("request_id"):
@@ -358,6 +391,14 @@ class Worker:
             n = c.execute("select attempts from steps where job_id=%s and name=%s",
                           (self.job, step["name"])).fetchone()["attempts"]
             log(c, self.job, self.name, "step_done", step["name"], attempt=n)
+            if c.execute("select count(*) as n from steps where job_id=%s and status<>'done'",
+                         (self.job,)).fetchone()["n"]:
+                return None
+            if r["cancel_requested"]:
+                return _settle_cancelled(c, self.job, self.name, "cancel arrived before the job was settled", "running")
+            if r["overdue"]:
+                return _settle_failed(c, self.job, self.name, _deadline_msg(c, self.job) + "; not settled", step["name"])
+            return self._settle_success(c)
 
     def _outputs(self, c):
         rows = c.execute("select name, output from steps where job_id=%s and status='done'", (self.job,)).fetchall()
@@ -384,7 +425,11 @@ class Worker:
         attempt = self._count_try(c, step["name"])
         with self.owned(c):
             log(c, self.job, self.name, "step_started", step["name"], attempt=attempt)
-        return self.impl.run(self._job(c), step["name"], self._outputs(c))
+        out = self.impl.run(self._job(c), step["name"], self._outputs(c))
+        if isinstance(out, dict) and out.get("deliver"):
+            # still inside the step: a read error here is the step's failure, handled like any other
+            out = {**out, "deliver": {name: fingerprint(path, name) for name, path in sorted(out["deliver"].items())}}
+        return out
 
     # ------------------------------------------------------------ clips
     def _needs_review(self, c, call, msg):
@@ -587,48 +632,35 @@ class Worker:
                 max_attempts=self.max_attempts, error=str(err))
             return False
 
-    def _succeed(self, c):
-        """Charge, mark succeeded and publish in one transaction, after reading the cancel flag
-        again under the row lock (I3). A cancel recorded first wins: nothing charged, nothing published."""
-        publish = {}
-        for out in self._outputs(c).values():
-            publish.update((out or {}).get("publish") or {})
-        staged, moved = [], []
-        try:
-            for dst, src in sorted(publish.items()):
-                tmp = f"{dst}.f{self.fence}.tmp"
-                os.makedirs(os.path.dirname(tmp) or ".", exist_ok=True)
-                shutil.copyfile(src, tmp)
-                staged.append((tmp, dst))
-            try:
-                with self.owned(c) as r:
-                    if r["cancel_requested"]:
-                        return _settle_cancelled(c, self.job, self.name, "cancel arrived before the job was settled",
-                                                 "running")
-                    outputs = self._outputs(c)
-                    last = c.execute("select name from steps where job_id=%s order by seq desc limit 1",
-                                     (self.job,)).fetchone()["name"]
-                    result = {k: v for k, v in (outputs.get(last) or {}).items() if k != "publish"}
-                    if publish:
-                        result["published"] = sorted(publish)
-                    entry = credits.consume(c, self.job)
-                    c.execute("update jobs set status='succeeded', output=%s::jsonb, lease_owner=null,"
-                              " lease_expires_at=null, updated_at=clock_timestamp() where id=%s",
-                              (json.dumps(result), self.job))
-                    log(c, self.job, self.name, "job_succeeded",
-                        charge=None if entry is None else {"id": entry["id"], "amount": entry["amount"],
-                                                           "idempotency_key": entry["idempotency_key"]},
-                        **({"published": sorted(publish)} if publish else {}))
-                    for tmp, dst in staged:  # the last thing before the commit
-                        os.replace(tmp, dst)
-                        moved.append(dst)
-            except BaseException:
-                for dst in moved:  # not committed: take the files back down
-                    if os.path.exists(dst):
-                        os.remove(dst)
-                raise
-        finally:
-            for tmp, _ in staged:
-                if os.path.exists(tmp):
-                    os.remove(tmp)
+    def _settle_success(self, c):
+        """Inside the transaction that holds the job row with this worker's fence, after
+        the cancel flag was read under that lock: one charge, status 'succeeded' and the
+        'published' column (path and SHA-256 of every delivered file). No file is
+        written or moved: out/ is an export made afterwards from this column (I3)."""
+        outputs = self._outputs(c)
+        last = c.execute("select name from steps where job_id=%s order by seq desc limit 1",
+                         (self.job,)).fetchone()
+        result = {k: v for k, v in (outputs.get(last["name"]) or {}).items() if k != "deliver"} if last else {}
+        published = sorted(({"name": n, **f} for out in outputs.values() for n, f in ((out or {}).get("deliver") or {}).items()),
+                           key=lambda f: f["name"])
+        entry = credits.consume(c, self.job)
+        c.execute("update jobs set status='succeeded', output=%s::jsonb, published=%s::jsonb, lease_owner=null,"
+                  " lease_expires_at=null, updated_at=clock_timestamp() where id=%s",
+                  (json.dumps(result), json.dumps(published) if published else None, self.job))
+        log(c, self.job, self.name, "job_succeeded",
+            charge=None if entry is None else {"id": entry["id"], "amount": entry["amount"],
+                                               "idempotency_key": entry["idempotency_key"]},
+            **({"published": [{"name": f["name"], "sha256": f["sha256"]} for f in published]} if published else {}))
         return "succeeded"
+
+
+def fingerprint(path, name):
+    """Path, size and SHA-256 of a delivered file. `name` is its file name in the export."""
+    if not isinstance(name, str) or not name or name != os.path.basename(name) or name in (".", ".."):
+        raise ValueError(f"a delivered file needs a plain file name, got {name!r}")
+    h, size = hashlib.sha256(), 0
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+            size += len(chunk)
+    return {"path": os.path.abspath(path), "bytes": size, "sha256": h.hexdigest()}

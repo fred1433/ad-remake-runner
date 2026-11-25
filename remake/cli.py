@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 from . import credits, db
+from .export import export_films
 from .pipeline import COST, STEP_LABELS, STEPS, FilmPipeline, ROOT
 from .provider import SimProvider
 from .worker import Worker, create_job, log
@@ -101,7 +102,7 @@ def rel(v):
     return v
 
 
-def export(dsn, jobs, stripe, clean):
+def export(dsn, jobs, stripe, clean, exported):
     with db.connect(dsn) as c:
         out = {"recorded_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                "postgres": c.execute("show server_version").fetchone()["server_version"],
@@ -116,6 +117,8 @@ def export(dsn, jobs, stripe, clean):
                 "id": jid, "hook": hook, "status": j["status"], "fence": j["fence"], "error": j["error"],
                 "incident": None if clean else INCIDENTS.get(hook, {}).get("story"),
                 "output": rel(j["output"] or {}),
+                "published": rel(j["published"] or []),
+                "exported": [f"out/{name} ({how})" for jid_, name, how in exported if jid_ == jid],
                 "events": [{"t_ms": round((e["at"] - t0).total_seconds() * 1000), "worker": e["worker"],
                             "kind": e["kind"], "step": e["step"], "detail": rel(e["detail"])} for e in evs],
                 "steps": [{"name": s["name"], "status": s["status"], "attempts": s["attempts"]}
@@ -148,12 +151,16 @@ def cmd_film(args):
         jobs = {}
         with db.connect(dsn) as c:
             for h in hooks:
-                jobs[h] = create_job(c, ACCOUNT, "film", {"hook": h, "out": f"out/remake_hook{h}.mp4"}, STEPS, COST)
+                jobs[h] = create_job(c, ACCOUNT, "film", {"hook": h}, STEPS, COST)
         for h, jid in jobs.items():
             t = time.monotonic()
             status = run_job(dsn, jid, h, pipe, args.clean)
             print(f"job {jid} hook {h}: {status} in {time.monotonic() - t:.1f} s")
-        rec = export(dsn, jobs, stripe, args.clean)
+        with db.connect(dsn) as c:  # out/ is copied from the database, for succeeded jobs only (I3)
+            exported = export_films(c, ROOT / "out", list(jobs.values()))
+        for jid, name, how in exported:
+            print(f"job {jid}: out/{name} {how}")
+        rec = export(dsn, jobs, stripe, args.clean, exported)
     stem = "clean_run" if args.clean else "recorded_run"
     if hooks != list(pipe.script["hooks"]):  # a partial run never replaces the full trace
         stem += "_" + "".join(hooks)
@@ -162,7 +169,7 @@ def cmd_film(args):
     path.write_text(json.dumps(rec, indent=1, default=str))
     for j in rec["jobs"]:
         o = j["output"] or {}
-        print(f"hook {j['hook']}: {j['status']}  {o.get('film', '-')}  {o.get('duration_s', '-')} s  {o.get('lufs', '-')} LUFS"
+        print(f"hook {j['hook']}: {j['status']}  {', '.join(j['exported']) or '-'}  {o.get('duration_s', '-')} s  {o.get('lufs', '-')} LUFS"
               f"  submissions {j['provider_submissions']}")
     print(f"balance {rec['balance']}  ->  {path.relative_to(ROOT)}")
     return 0 if all(j["status"] == "succeeded" for j in rec["jobs"]) else 1
@@ -172,7 +179,7 @@ def cmd_work(args):
     pipe = FilmPipeline(ROOT / "build")
     w = worker_for(args.dsn, args.name, pipe, crash_at=args.crash_at)
     got = w.run_once(only_job=args.job)
-    print(f"{args.name}: {got}")
+    print(f"{args.name}: {got}" + (f" ({w.stop_reason})" if w.stop_reason else ""))
     return 0
 
 

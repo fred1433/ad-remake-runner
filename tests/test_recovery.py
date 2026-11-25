@@ -1,5 +1,6 @@
 """Crash, freeze and cancel at every boundary of a step. Each test is a scenario
 that broke an earlier version of the runner."""
+import hashlib
 import subprocess
 import threading
 import time
@@ -7,6 +8,7 @@ import time
 import pytest
 
 from remake import credits, db, media
+from remake.export import export_films
 from remake.worker import cancel_job
 from tests.conftest import ACCOUNT, charges, events, new_job, submissions
 from tests.fakes import FakeFlow, make_worker
@@ -189,11 +191,12 @@ def test_a_lost_heartbeat_stops_the_worker_before_anyone_takes_over(dsn, conn, t
     t.join(5)
     assert result["r"][1] == "fenced"
     assert time.monotonic() - t_kill < 1.0  # stopped well before its 1 s lease could be taken over
-    assert "lease lost" in events(conn, jid, "fenced_out")[0]["detail"]["reason"]
-    assert not (tmp_path / "out").exists()  # it published nothing
+    assert "lease lost" in a.stop_reason
+    assert events(conn, jid, "fenced_out") == [] and job(conn, jid)["published"] is None
     time.sleep(1.1)
     _, status = make_worker(dsn, "B", flow=FakeFlow(tmp_path)).run_once()
     assert status == "succeeded"
+    export_films(conn, tmp_path / "out")
     assert (tmp_path / "out" / f"film_{jid}.txt").read_text() == "rendered under fence 2"
 
 
@@ -210,11 +213,17 @@ def test_a_late_worker_can_only_leave_unpublished_files(dsn, conn, tmp_path):
     assert status == "succeeded"
     t.join()
     assert result["r"][1] == "fenced"
+    assert not (tmp_path / "out").exists()  # the workers never write to out/
+    late_file, kept = tmp_path / f"job{jid}" / "f1" / "film.txt", tmp_path / f"job{jid}" / "f2" / "film.txt"
+    assert late_file.exists()  # the late file stays in its own folder
+    pub = job(conn, jid)["published"]
+    assert [(p["name"], p["path"]) for p in pub] == [(f"film_{jid}.txt", str(kept))]
+    assert pub[0]["sha256"] == hashlib.sha256(kept.read_bytes()).hexdigest()
+    assert export_films(conn, tmp_path / "out") == [(jid, f"film_{jid}.txt", "exported")]
+    assert export_films(conn, tmp_path / "out") == [(jid, f"film_{jid}.txt", "unchanged")]  # idempotent
     out = tmp_path / "out" / f"film_{jid}.txt"
-    assert out.read_text() == "rendered under fence 2"  # the rescuer's film, not overwritten
-    assert (tmp_path / f"job{jid}" / "f1" / "film.txt").exists()  # the late file stays in its own folder
+    assert out.read_text() == "rendered under fence 2"  # the rescuer's film
     assert sorted(p.name for p in out.parent.iterdir()) == [out.name]  # no stray temporary file
-    assert job(conn, jid)["output"]["published"] == [str(out)]
 
 
 def test_voice_cache_entries_are_written_whole_or_not_at_all(tmp_path):

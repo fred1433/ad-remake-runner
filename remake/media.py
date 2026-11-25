@@ -29,7 +29,7 @@ FFMPEG_TIMEOUT_S = 120
 
 
 class Aborted(Exception):
-    """The worker lost its lease: the subprocess was stopped and nothing is published."""
+    """The worker lost its lease: the subprocess was stopped; the step is not recorded."""
 
 
 def run(cmd, timeout, abort=None, capture=False):
@@ -444,7 +444,7 @@ def measure_lufs(path, abort=None):
 def assemble(clips, timeline, voice_wav, total, out_path, brand, tagline, fps=30, abort=None,
              timeout=EDIT_TIMEOUT_S):
     """The final film: clips end to end, normalised voice, captions, badge, brand cards.
-    `out_path` is a private path (named after the job and fence); publishing is the runner's job."""
+    `out_path` is a private path (named after the job and fence), never moved; out/ gets a copy by remake.export."""
     out_path = Path(out_path)
     work = out_path.parent / (out_path.stem + "_work")
     work.mkdir(parents=True, exist_ok=True)

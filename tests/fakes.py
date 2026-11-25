@@ -1,7 +1,9 @@
 """A fast stand-in for the film pipeline: same step names, no media work.
 
 Its edit step writes a small file into the worker's own folder (job and fence)
-and asks the runner to publish it, like the real edit step does with the film."""
+and delivers it, like the real edit step does with the film: the runner
+fingerprints it, records it as published when the job succeeds, and
+remake.export copies it to <root>/out/ afterwards."""
 import json
 import sys
 import time
@@ -18,8 +20,8 @@ COST = 60
 class FakeFlow:
     abort = None
 
-    def __init__(self, root=None, edit_s=0.0, stuck=None):
-        self.root, self.edit_s, self.stuck = (Path(root) if root else None), edit_s, stuck
+    def __init__(self, root=None, edit_s=0.0, stuck=None, vanish=False):
+        self.root, self.edit_s, self.stuck, self.vanish = (Path(root) if root else None), edit_s, stuck, vanish
 
     def run(self, job, step, outputs):
         if step == self.stuck:  # a subprocess that never finishes on its own
@@ -33,8 +35,9 @@ class FakeFlow:
             d = self.root / f"job{job['id']}" / f"f{job['fence']}"
             d.mkdir(parents=True, exist_ok=True)
             (d / "film.txt").write_text(f"rendered under fence {job['fence']}")
-            dst = self.root / "out" / f"film_{job['id']}.txt"
-            return {"step": step, "film": str(dst), "publish": {str(dst): str(d / "film.txt")}}
+            if self.vanish:  # the file is gone before the runner reads it back
+                (d / "film.txt").unlink()
+            return {"step": step, "film": str(d / "film.txt"), "deliver": {f"film_{job['id']}.txt": str(d / "film.txt")}}
         return {"step": step, "seen": sorted(outputs)}
 
     def clip_spec(self, job, step, outputs):
