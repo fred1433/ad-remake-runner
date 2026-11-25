@@ -23,6 +23,9 @@ create table jobs (
     check (status in ('queued','running','succeeded','failed','cancelled','needs_review')),
   lease_owner text,
   lease_expires_at timestamptz,
+  lease_renewed_at timestamptz,
+  first_claimed_at timestamptz,
+  deadline_at timestamptz,            -- fixed at the first claim: past it, the job fails (I1)
   fence bigint not null default 0,
   cancel_requested boolean not null default false,
   error text,
@@ -37,7 +40,9 @@ create table steps (
   seq int not null,
   status text not null default 'pending'
     check (status in ('pending','done','failed','waiting_provider','outcome_unknown')),
-  attempts int not null default 0,
+  attempts int not null default 0,   -- tries: runs, submissions, resends (I2)
+  leases int not null default 0,     -- leases (fences) that picked this step up (I2)
+  last_fence bigint,
   next_attempt_at timestamptz,
   output jsonb,
   last_error text,
@@ -122,9 +127,11 @@ create table sim_provider.dropped (
 """
 
 
-def connect(dsn, app=None):
+def connect(dsn, app=None, statement_timeout_s=60.0, connect_timeout_s=10):
+    """Every connection has a connect timeout and a statement timeout (I1)."""
     kw = {"application_name": app} if app else {}
-    return psycopg.connect(dsn, row_factory=dict_row, autocommit=True, **kw)
+    return psycopg.connect(dsn, row_factory=dict_row, autocommit=True, connect_timeout=int(connect_timeout_s),
+                           options=f"-c statement_timeout={int(statement_timeout_s * 1000)}", **kw)
 
 
 def reset(dsn):

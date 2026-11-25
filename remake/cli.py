@@ -21,6 +21,7 @@ from .worker import Worker, create_job, log
 
 LEASE_S = 6.0
 PROVIDER_DEADLINE_S = 300.0  # a clip with no answer this long after submission is cancelled and retried
+JOB_DEADLINE_S = 3600.0  # a job still running this long after its first claim fails
 ACCOUNT = "acct_demo_studio"
 WEBHOOK_SECRET = "whsec_local_test_only"
 
@@ -64,7 +65,7 @@ def buy_credits(dsn, amount=500):
 
 def worker_for(dsn, name, pipe, faults=None, **kw):
     return Worker(dsn, name, pipe, SimProvider(dsn, pipe.render, faults or {}), lease_s=LEASE_S,
-                  provider_deadline_s=PROVIDER_DEADLINE_S, status_timeout_s=60.0, **kw)
+                  provider_deadline_s=PROVIDER_DEADLINE_S, status_timeout_s=60.0, job_deadline_s=JOB_DEADLINE_S, **kw)
 
 
 def run_job(dsn, job_id, hook, pipe, clean):
@@ -89,12 +90,23 @@ def run_job(dsn, job_id, hook, pipe, clean):
     return w.run_once(only_job=job_id)[1]
 
 
+def rel(v):
+    """Paths inside the repository, written relative to it."""
+    if isinstance(v, str) and v.startswith(str(ROOT) + os.sep):
+        return str(Path(v).relative_to(ROOT))
+    if isinstance(v, list):
+        return [rel(x) for x in v]
+    if isinstance(v, dict):
+        return {k: rel(x) for k, x in v.items()}
+    return v
+
+
 def export(dsn, jobs, stripe, clean):
     with db.connect(dsn) as c:
         out = {"recorded_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                "postgres": c.execute("show server_version").fetchone()["server_version"],
                "lease_s": LEASE_S, "retry": {"base_s": 1.0, "cap_s": 8.0, "max_attempts": 4},
-               "provider_deadline_s": PROVIDER_DEADLINE_S, "step_labels": STEP_LABELS,
+               "provider_deadline_s": PROVIDER_DEADLINE_S, "job_deadline_s": JOB_DEADLINE_S, "step_labels": STEP_LABELS,
                "credits_per_film": COST, "clean": clean, "stripe": stripe, "jobs": []}
         for hook, jid in jobs.items():
             j = c.execute("select * from jobs where id=%s", (jid,)).fetchone()
@@ -103,10 +115,9 @@ def export(dsn, jobs, stripe, clean):
             out["jobs"].append({
                 "id": jid, "hook": hook, "status": j["status"], "fence": j["fence"], "error": j["error"],
                 "incident": None if clean else INCIDENTS.get(hook, {}).get("story"),
-                "output": {k: (str(Path(v).relative_to(ROOT)) if isinstance(v, str) and v.startswith(str(ROOT)) else v)
-                           for k, v in (j["output"] or {}).items()},
+                "output": rel(j["output"] or {}),
                 "events": [{"t_ms": round((e["at"] - t0).total_seconds() * 1000), "worker": e["worker"],
-                            "kind": e["kind"], "step": e["step"], "detail": e["detail"]} for e in evs],
+                            "kind": e["kind"], "step": e["step"], "detail": rel(e["detail"])} for e in evs],
                 "steps": [{"name": s["name"], "status": s["status"], "attempts": s["attempts"]}
                           for s in c.execute("select * from steps where job_id=%s order by seq", (jid,)).fetchall()],
                 "provider_submissions": {r["step"]: r["n"] for r in c.execute(

@@ -214,7 +214,7 @@ def test_a_late_worker_can_only_leave_unpublished_files(dsn, conn, tmp_path):
     assert out.read_text() == "rendered under fence 2"  # the rescuer's film, not overwritten
     assert (tmp_path / f"job{jid}" / "f1" / "film.txt").exists()  # the late file stays in its own folder
     assert sorted(p.name for p in out.parent.iterdir()) == [out.name]  # no stray temporary file
-    assert steps(conn, jid)["edit"]["output"]["published"] == [str(out)]
+    assert job(conn, jid)["output"]["published"] == [str(out)]
 
 
 def test_voice_cache_entries_are_written_whole_or_not_at_all(tmp_path):

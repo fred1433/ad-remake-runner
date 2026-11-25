@@ -1,5 +1,5 @@
 {
- "recorded_at": "2026-11-25T16:15:23+00:00",
+ "recorded_at": "2026-11-25T17:11:32+00:00",
  "postgres": "14.23 (Homebrew)",
  "lease_s": 6.0,
  "retry": {
@@ -8,6 +8,7 @@
   "max_attempts": 4
  },
  "provider_deadline_s": 300.0,
+ "job_deadline_s": 3600.0,
  "step_labels": {
   "breakdown": "Validate breakdown",
   "script": "Load script",
@@ -51,14 +52,14 @@
     "captions": 39,
     "rendered": "build/job1/f1/remake_hookA.mp4",
     "published": [
-     "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookA.jpg",
-     "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookA.mp4"
+     "out/remake_hookA.jpg",
+     "out/remake_hookA.mp4"
     ],
     "duration_s": 41.8
    },
    "events": [
     {
-     "t_ms": 3,
+     "t_ms": 2,
      "worker": null,
      "kind": "job_created",
      "step": null,
@@ -68,7 +69,7 @@
      }
     },
     {
-     "t_ms": 12,
+     "t_ms": 7,
      "worker": "worker-1",
      "kind": "claimed",
      "step": null,
@@ -79,7 +80,7 @@
      }
     },
     {
-     "t_ms": 17,
+     "t_ms": 11,
      "worker": "worker-1",
      "kind": "step_started",
      "step": "breakdown",
@@ -88,7 +89,7 @@
      }
     },
     {
-     "t_ms": 18,
+     "t_ms": 12,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "breakdown",
@@ -97,7 +98,7 @@
      }
     },
     {
-     "t_ms": 18,
+     "t_ms": 13,
      "worker": "worker-1",
      "kind": "step_started",
      "step": "script",
@@ -106,7 +107,7 @@
      }
     },
     {
-     "t_ms": 19,
+     "t_ms": 14,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "script",
@@ -115,7 +116,7 @@
      }
     },
     {
-     "t_ms": 20,
+     "t_ms": 15,
      "worker": "worker-1",
      "kind": "step_started",
      "step": "voice",
@@ -124,7 +125,7 @@
      }
     },
     {
-     "t_ms": 17600,
+     "t_ms": 37,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "voice",
@@ -133,7 +134,7 @@
      }
     },
     {
-     "t_ms": 17601,
+     "t_ms": 38,
      "worker": "worker-1",
      "kind": "step_started",
      "step": "characters",
@@ -142,7 +143,7 @@
      }
     },
     {
-     "t_ms": 17604,
+     "t_ms": 40,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "characters",
@@ -151,7 +152,7 @@
      }
     },
     {
-     "t_ms": 17605,
+     "t_ms": 41,
      "worker": "worker-1",
      "kind": "step_started",
      "step": "storyboard",
@@ -160,7 +161,7 @@
      }
     },
     {
-     "t_ms": 17631,
+     "t_ms": 59,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "storyboard",
@@ -169,17 +170,17 @@
      }
     },
     {
-     "t_ms": 17637,
+     "t_ms": 66,
      "worker": "worker-1",
      "kind": "provider_submitted",
      "step": "clip:01",
      "detail": {
       "attempt": 1,
-      "request_id": "req_5fc866f7bcdf"
+      "request_id": "req_bdcf70d4c2c9"
      }
     },
     {
-     "t_ms": 19355,
+     "t_ms": 1734,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "clip:01",
@@ -188,17 +189,17 @@
      }
     },
     {
-     "t_ms": 19360,
+     "t_ms": 1738,
      "worker": "worker-1",
      "kind": "provider_submitted",
      "step": "clip:02",
      "detail": {
       "attempt": 1,
-      "request_id": "req_b0933129b6be"
+      "request_id": "req_8fb57b25b149"
      }
     },
     {
-     "t_ms": 21052,
+     "t_ms": 3333,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "clip:02",
@@ -207,17 +208,17 @@
      }
     },
     {
-     "t_ms": 21059,
+     "t_ms": 3339,
      "worker": "worker-1",
      "kind": "provider_submitted",
      "step": "clip:03",
      "detail": {
       "attempt": 1,
-      "request_id": "req_cc5e6020d235"
+      "request_id": "req_cbd8f018132a"
      }
     },
     {
-     "t_ms": 26019,
+     "t_ms": 7973,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "clip:03",
@@ -226,27 +227,27 @@
      }
     },
     {
-     "t_ms": 26027,
+     "t_ms": 7978,
      "worker": "worker-1",
      "kind": "provider_submitted",
      "step": "clip:04",
      "detail": {
       "attempt": 1,
-      "request_id": "req_2e0622ccd0a5"
+      "request_id": "req_3cdeb31605ed"
      }
     },
     {
-     "t_ms": 26033,
+     "t_ms": 7982,
      "worker": "worker-1",
      "kind": "provider_failed",
      "step": "clip:04",
      "detail": {
       "error": "503 no capacity, generation not started",
-      "request_id": "req_2e0622ccd0a5"
+      "request_id": "req_3cdeb31605ed"
      }
     },
     {
-     "t_ms": 26035,
+     "t_ms": 7982,
      "worker": "worker-1",
      "kind": "retry_scheduled",
      "step": "clip:04",
@@ -258,17 +259,17 @@
      }
     },
     {
-     "t_ms": 27051,
+     "t_ms": 8991,
      "worker": "worker-1",
      "kind": "provider_submitted",
      "step": "clip:04",
      "detail": {
       "attempt": 2,
-      "request_id": "req_7f8588da1cce"
+      "request_id": "req_de8a639b8143"
      }
     },
     {
-     "t_ms": 33007,
+     "t_ms": 14726,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "clip:04",
@@ -277,17 +278,17 @@
      }
     },
     {
-     "t_ms": 33013,
+     "t_ms": 14732,
      "worker": "worker-1",
      "kind": "provider_submitted",
      "step": "clip:05",
      "detail": {
       "attempt": 1,
-      "request_id": "req_19fa210ec76e"
+      "request_id": "req_f34922147e6f"
      }
     },
     {
-     "t_ms": 39368,
+     "t_ms": 20510,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "clip:05",
@@ -296,17 +297,17 @@
      }
     },
     {
-     "t_ms": 39374,
+     "t_ms": 20517,
      "worker": "worker-1",
      "kind": "provider_submitted",
      "step": "clip:06",
      "detail": {
       "attempt": 1,
-      "request_id": "req_7e563fa80157"
+      "request_id": "req_0810b1d03a38"
      }
     },
     {
-     "t_ms": 44906,
+     "t_ms": 25966,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "clip:06",
@@ -315,7 +316,7 @@
      }
     },
     {
-     "t_ms": 44907,
+     "t_ms": 25967,
      "worker": "worker-1",
      "kind": "step_started",
      "step": "edit",
@@ -324,20 +325,16 @@
      }
     },
     {
-     "t_ms": 72882,
+     "t_ms": 66822,
      "worker": "worker-1",
      "kind": "step_done",
      "step": "edit",
      "detail": {
-      "attempt": 1,
-      "published": [
-       "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookA.jpg",
-       "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookA.mp4"
-      ]
+      "attempt": 1
      }
     },
     {
-     "t_ms": 72885,
+     "t_ms": 66837,
      "worker": "worker-1",
      "kind": "job_succeeded",
      "step": null,
@@ -346,7 +343,11 @@
        "id": 3,
        "amount": -60,
        "idempotency_key": "charge:job:1"
-      }
+      },
+      "published": [
+       "out/remake_hookA.jpg",
+       "out/remake_hookA.mp4"
+      ]
      }
     }
    ],
@@ -440,8 +441,8 @@
     "captions": 39,
     "rendered": "build/job2/f2/remake_hookB.mp4",
     "published": [
-     "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookB.jpg",
-     "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookB.mp4"
+     "out/remake_hookB.jpg",
+     "out/remake_hookB.mp4"
     ],
     "duration_s": 41.8
    },
@@ -457,7 +458,7 @@
      }
     },
     {
-     "t_ms": 73220,
+     "t_ms": 67092,
      "worker": "worker-2",
      "kind": "claimed",
      "step": null,
@@ -468,7 +469,7 @@
      }
     },
     {
-     "t_ms": 73228,
+     "t_ms": 67125,
      "worker": "worker-2",
      "kind": "step_started",
      "step": "breakdown",
@@ -477,7 +478,7 @@
      }
     },
     {
-     "t_ms": 73230,
+     "t_ms": 67126,
      "worker": "worker-2",
      "kind": "step_done",
      "step": "breakdown",
@@ -486,7 +487,7 @@
      }
     },
     {
-     "t_ms": 73232,
+     "t_ms": 67127,
      "worker": "worker-2",
      "kind": "step_started",
      "step": "script",
@@ -495,7 +496,7 @@
      }
     },
     {
-     "t_ms": 73233,
+     "t_ms": 67131,
      "worker": "worker-2",
      "kind": "step_done",
      "step": "script",
@@ -504,7 +505,7 @@
      }
     },
     {
-     "t_ms": 73238,
+     "t_ms": 67133,
      "worker": "worker-2",
      "kind": "step_started",
      "step": "voice",
@@ -513,7 +514,7 @@
      }
     },
     {
-     "t_ms": 82989,
+     "t_ms": 67159,
      "worker": "worker-2",
      "kind": "step_done",
      "step": "voice",
@@ -522,7 +523,7 @@
      }
     },
     {
-     "t_ms": 82990,
+     "t_ms": 67161,
      "worker": "worker-2",
      "kind": "step_started",
      "step": "characters",
@@ -531,7 +532,7 @@
      }
     },
     {
-     "t_ms": 82992,
+     "t_ms": 67169,
      "worker": "worker-2",
      "kind": "step_done",
      "step": "characters",
@@ -540,7 +541,7 @@
      }
     },
     {
-     "t_ms": 82993,
+     "t_ms": 67171,
      "worker": "worker-2",
      "kind": "step_started",
      "step": "storyboard",
@@ -549,7 +550,7 @@
      }
     },
     {
-     "t_ms": 83013,
+     "t_ms": 67199,
      "worker": "worker-2",
      "kind": "step_done",
      "step": "storyboard",
@@ -558,17 +559,17 @@
      }
     },
     {
-     "t_ms": 83020,
+     "t_ms": 67210,
      "worker": "worker-2",
      "kind": "provider_submitted",
      "step": "clip:01",
      "detail": {
       "attempt": 1,
-      "request_id": "req_4c6f1f497cdb"
+      "request_id": "req_aea89935d8a4"
      }
     },
     {
-     "t_ms": 84826,
+     "t_ms": 71857,
      "worker": "worker-2",
      "kind": "step_done",
      "step": "clip:01",
@@ -577,17 +578,17 @@
      }
     },
     {
-     "t_ms": 84831,
+     "t_ms": 71870,
      "worker": "worker-2",
      "kind": "provider_submitted",
      "step": "clip:02",
      "detail": {
       "attempt": 1,
-      "request_id": "req_d4ca16e0501e"
+      "request_id": "req_e54082271a26"
      }
     },
     {
-     "t_ms": 86587,
+     "t_ms": 77063,
      "worker": "worker-2",
      "kind": "step_done",
      "step": "clip:02",
@@ -596,7 +597,7 @@
      }
     },
     {
-     "t_ms": 86593,
+     "t_ms": 77070,
      "worker": "supervisor",
      "kind": "worker_process_exited",
      "step": null,
@@ -607,28 +608,29 @@
      }
     },
     {
-     "t_ms": 91490,
+     "t_ms": 81280,
      "worker": "worker-3",
      "kind": "lease_taken_over",
      "step": null,
      "detail": {
       "fence": 2,
       "lease_s": 6.0,
-      "previous_owner": "worker-2"
+      "previous_owner": "worker-2",
+      "previous_lease_renewed_s_ago": 6.163
      }
     },
     {
-     "t_ms": 91501,
+     "t_ms": 81299,
      "worker": "worker-3",
      "kind": "provider_submitted",
      "step": "clip:03",
      "detail": {
       "attempt": 1,
-      "request_id": "req_ba71a79aad95"
+      "request_id": "req_f2a547789c3f"
      }
     },
     {
-     "t_ms": 96593,
+     "t_ms": 99168,
      "worker": "worker-3",
      "kind": "step_done",
      "step": "clip:03",
@@ -637,17 +639,17 @@
      }
     },
     {
-     "t_ms": 96605,
+     "t_ms": 99178,
      "worker": "worker-3",
      "kind": "provider_submitted",
      "step": "clip:04",
      "detail": {
       "attempt": 1,
-      "request_id": "req_c66a9b53053b"
+      "request_id": "req_00514831c23e"
      }
     },
     {
-     "t_ms": 104009,
+     "t_ms": 119112,
      "worker": "worker-3",
      "kind": "step_done",
      "step": "clip:04",
@@ -656,17 +658,17 @@
      }
     },
     {
-     "t_ms": 104017,
+     "t_ms": 119125,
      "worker": "worker-3",
      "kind": "provider_submitted",
      "step": "clip:05",
      "detail": {
       "attempt": 1,
-      "request_id": "req_e75f42c10e13"
+      "request_id": "req_1cee1502d8d1"
      }
     },
     {
-     "t_ms": 111021,
+     "t_ms": 135090,
      "worker": "worker-3",
      "kind": "step_done",
      "step": "clip:05",
@@ -675,17 +677,17 @@
      }
     },
     {
-     "t_ms": 111027,
+     "t_ms": 135103,
      "worker": "worker-3",
      "kind": "provider_submitted",
      "step": "clip:06",
      "detail": {
       "attempt": 1,
-      "request_id": "req_db7eae0a2c03"
+      "request_id": "req_b4d400e6bf63"
      }
     },
     {
-     "t_ms": 117521,
+     "t_ms": 150752,
      "worker": "worker-3",
      "kind": "step_done",
      "step": "clip:06",
@@ -694,7 +696,7 @@
      }
     },
     {
-     "t_ms": 117521,
+     "t_ms": 150758,
      "worker": "worker-3",
      "kind": "step_started",
      "step": "edit",
@@ -703,20 +705,16 @@
      }
     },
     {
-     "t_ms": 176219,
+     "t_ms": 203740,
      "worker": "worker-3",
      "kind": "step_done",
      "step": "edit",
      "detail": {
-      "attempt": 1,
-      "published": [
-       "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookB.jpg",
-       "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookB.mp4"
-      ]
+      "attempt": 1
      }
     },
     {
-     "t_ms": 176223,
+     "t_ms": 203754,
      "worker": "worker-3",
      "kind": "job_succeeded",
      "step": null,
@@ -725,7 +723,11 @@
        "id": 4,
        "amount": -60,
        "idempotency_key": "charge:job:2"
-      }
+      },
+      "published": [
+       "out/remake_hookB.jpg",
+       "out/remake_hookB.mp4"
+      ]
      }
     }
    ],
@@ -819,14 +821,14 @@
     "captions": 38,
     "rendered": "build/job3/f1/remake_hookC.mp4",
     "published": [
-     "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookC.jpg",
-     "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookC.mp4"
+     "out/remake_hookC.jpg",
+     "out/remake_hookC.mp4"
     ],
     "duration_s": 41.8
    },
    "events": [
     {
-     "t_ms": 2,
+     "t_ms": 1,
      "worker": null,
      "kind": "job_created",
      "step": null,
@@ -836,7 +838,7 @@
      }
     },
     {
-     "t_ms": 176225,
+     "t_ms": 203766,
      "worker": "worker-4",
      "kind": "claimed",
      "step": null,
@@ -847,7 +849,7 @@
      }
     },
     {
-     "t_ms": 176229,
+     "t_ms": 203775,
      "worker": "worker-4",
      "kind": "step_started",
      "step": "breakdown",
@@ -856,7 +858,7 @@
      }
     },
     {
-     "t_ms": 176230,
+     "t_ms": 203777,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "breakdown",
@@ -865,7 +867,7 @@
      }
     },
     {
-     "t_ms": 176232,
+     "t_ms": 203780,
      "worker": "worker-4",
      "kind": "step_started",
      "step": "script",
@@ -874,7 +876,7 @@
      }
     },
     {
-     "t_ms": 176234,
+     "t_ms": 203782,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "script",
@@ -883,7 +885,7 @@
      }
     },
     {
-     "t_ms": 176235,
+     "t_ms": 203783,
      "worker": "worker-4",
      "kind": "step_started",
      "step": "voice",
@@ -892,7 +894,7 @@
      }
     },
     {
-     "t_ms": 191859,
+     "t_ms": 203804,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "voice",
@@ -901,7 +903,7 @@
      }
     },
     {
-     "t_ms": 191860,
+     "t_ms": 203807,
      "worker": "worker-4",
      "kind": "step_started",
      "step": "characters",
@@ -910,7 +912,7 @@
      }
     },
     {
-     "t_ms": 191864,
+     "t_ms": 203811,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "characters",
@@ -919,7 +921,7 @@
      }
     },
     {
-     "t_ms": 191867,
+     "t_ms": 203814,
      "worker": "worker-4",
      "kind": "step_started",
      "step": "storyboard",
@@ -928,7 +930,7 @@
      }
     },
     {
-     "t_ms": 191909,
+     "t_ms": 203837,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "storyboard",
@@ -937,17 +939,17 @@
      }
     },
     {
-     "t_ms": 191932,
+     "t_ms": 203855,
      "worker": "worker-4",
      "kind": "provider_submitted",
      "step": "clip:01",
      "detail": {
       "attempt": 1,
-      "request_id": "req_31fcc6e1a992"
+      "request_id": "req_33c1793cd61f"
      }
     },
     {
-     "t_ms": 197942,
+     "t_ms": 208794,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "clip:01",
@@ -956,17 +958,17 @@
      }
     },
     {
-     "t_ms": 197957,
+     "t_ms": 208810,
      "worker": "worker-4",
      "kind": "provider_submitted",
      "step": "clip:02",
      "detail": {
       "attempt": 1,
-      "request_id": "req_293254c1d192"
+      "request_id": "req_5aa16790a746"
      }
     },
     {
-     "t_ms": 205395,
+     "t_ms": 214985,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "clip:02",
@@ -975,17 +977,17 @@
      }
     },
     {
-     "t_ms": 205402,
+     "t_ms": 214997,
      "worker": "worker-4",
      "kind": "provider_submitted",
      "step": "clip:03",
      "detail": {
       "attempt": 1,
-      "request_id": "req_ccbb5d66c315"
+      "request_id": "req_d6a73933fbbc"
      }
     },
     {
-     "t_ms": 225335,
+     "t_ms": 234060,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "clip:03",
@@ -994,17 +996,17 @@
      }
     },
     {
-     "t_ms": 225348,
+     "t_ms": 234071,
      "worker": "worker-4",
      "kind": "provider_submitted",
      "step": "clip:04",
      "detail": {
       "attempt": 1,
-      "request_id": "req_4c483eaeef0a"
+      "request_id": "req_0577b0ef802a"
      }
     },
     {
-     "t_ms": 249669,
+     "t_ms": 252345,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "clip:04",
@@ -1013,28 +1015,28 @@
      }
     },
     {
-     "t_ms": 249679,
+     "t_ms": 252355,
      "worker": "worker-4",
      "kind": "provider_submitted",
      "step": "clip:05",
      "detail": {
       "attempt": 1,
-      "request_id": "req_c450b32663e4"
+      "request_id": "req_5efda6dacc3f"
      }
     },
     {
-     "t_ms": 251248,
+     "t_ms": 253948,
      "worker": "worker-4",
      "kind": "provider_slow",
      "step": "clip:05",
      "detail": {
       "note": "not a failure: the same request is polled again, nothing is resubmitted",
       "waited_s": 1.5,
-      "request_id": "req_c450b32663e4"
+      "request_id": "req_5efda6dacc3f"
      }
     },
     {
-     "t_ms": 279293,
+     "t_ms": 274235,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "clip:05",
@@ -1043,17 +1045,17 @@
      }
     },
     {
-     "t_ms": 279303,
+     "t_ms": 274248,
      "worker": "worker-4",
      "kind": "provider_submitted",
      "step": "clip:06",
      "detail": {
       "attempt": 1,
-      "request_id": "req_3b9a341245d2"
+      "request_id": "req_5486590e4da8"
      }
     },
     {
-     "t_ms": 301370,
+     "t_ms": 290365,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "clip:06",
@@ -1062,7 +1064,7 @@
      }
     },
     {
-     "t_ms": 301371,
+     "t_ms": 290371,
      "worker": "worker-4",
      "kind": "step_started",
      "step": "edit",
@@ -1071,20 +1073,16 @@
      }
     },
     {
-     "t_ms": 348444,
+     "t_ms": 345981,
      "worker": "worker-4",
      "kind": "step_done",
      "step": "edit",
      "detail": {
-      "attempt": 1,
-      "published": [
-       "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookC.jpg",
-       "/Users/frederic/ProjetsDev/demos/ad-remake-runner/out/remake_hookC.mp4"
-      ]
+      "attempt": 1
      }
     },
     {
-     "t_ms": 348447,
+     "t_ms": 345990,
      "worker": "worker-4",
      "kind": "job_succeeded",
      "step": null,
@@ -1093,7 +1091,11 @@
        "id": 5,
        "amount": -60,
        "idempotency_key": "charge:job:3"
-      }
+      },
+      "published": [
+       "out/remake_hookC.jpg",
+       "out/remake_hookC.mp4"
+      ]
      }
     }
    ],

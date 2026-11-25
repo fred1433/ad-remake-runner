@@ -89,33 +89,43 @@ CHECKOUT = {"checkout.session.completed", "checkout.session.async_payment_succee
 CREDITING = CHECKOUT | {"payment_intent.succeeded"}
 
 
+MAX_CREDITS = 1_000_000  # per purchase; also keeps the amount inside the ledger's integer column
+
+
 def _purchase(conn, event):
     """What this event would credit, or the reason it credits nothing."""
     obj = event["data"]["object"]
     if event["type"] in CHECKOUT:
         payment = obj.get("payment_intent")
+        if not isinstance(payment, str):
+            payment = None
         if obj.get("payment_status") != "paid":
             return payment, None, f"ignored: payment_status is {obj.get('payment_status')!r}, not 'paid'"
     else:
         payment = obj.get("id")
+        if not isinstance(payment, str):
+            payment = None
         if obj.get("status", "succeeded") != "succeeded":
             return payment, None, f"ignored: payment intent status is {obj.get('status')!r}"
     if not payment:
         return None, None, "ignored: no payment reference"
     meta = obj.get("metadata") or {}
-    if "credits" not in meta or "account_id" not in meta:
+    if not isinstance(meta, dict) or "credits" not in meta or "account_id" not in meta:
         return payment, None, "ignored: no credits in metadata"
-    raw = str(meta["credits"]).strip()
-    if not raw.isdigit() or int(raw) <= 0:
-        return payment, None, f"ignored: credits must be a positive whole number, got {meta['credits']!r}"
-    if not conn.execute("select 1 from accounts where id=%s", (meta["account_id"],)).fetchone():
-        return payment, None, f"ignored: unknown account {meta['account_id']!r}"
-    return payment, (meta["account_id"], int(raw)), None
+    raw, account = meta["credits"], meta["account_id"]
+    text = str(raw).strip() if isinstance(raw, (str, int)) and not isinstance(raw, bool) else ""
+    if not (text.isascii() and text.isdigit()) or not 1 <= int(text) <= MAX_CREDITS:
+        return payment, None, f"ignored: credits must be a positive whole number up to {MAX_CREDITS}, got {raw!r}"
+    if not isinstance(account, str):
+        return payment, None, f"ignored: account_id must be text, got {type(account).__name__}"
+    if not conn.execute("select 1 from accounts where id=%s", (account,)).fetchone():
+        return payment, None, f"ignored: unknown account {account!r}"
+    return payment, (account, int(text)), None
 
 
 def handle_stripe_event(conn, event: dict) -> str:
     """Applies one verified event and returns what it did. Never raises on an
-    event it does not use: that event is recorded with the reason, and the
+    event it does not use (I5): that event is recorded with the reason, and the
     webhook answers 200 so Stripe stops retrying it.
 
     Credits are keyed on the payment intent, not on the event: a replayed event,
@@ -131,7 +141,10 @@ def handle_stripe_event(conn, event: dict) -> str:
             return "duplicate event: ignored"
         payment, effect = None, "ignored type"
         if event["type"] in CREDITING:
-            payment, credit, why = _purchase(conn, event)
+            try:
+                payment, credit, why = _purchase(conn, event)
+            except (KeyError, TypeError, AttributeError, ValueError) as e:
+                payment, credit, why = None, None, f"ignored: malformed event ({type(e).__name__})"
             if credit is None:
                 effect = why
             else:

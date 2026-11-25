@@ -53,6 +53,7 @@ def make_worker(dsn, name, faults=None, lookup=True, flow=None, slow_s=0.3, hang
     kw.setdefault("provider_wait_s", 0.05)
     kw.setdefault("provider_deadline_s", 30.0)
     kw.setdefault("status_timeout_s", 5.0)
+    kw.setdefault("job_deadline_s", 60.0)
     return Worker(dsn, name, flow, SimProvider(dsn, flow.render, faults or {}, supports_lookup=lookup,
                                                slow_s=slow_s, hang_s=hang_s), **kw)
 
